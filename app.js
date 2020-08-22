@@ -25,8 +25,11 @@ app.set('view engine', 'ejs');
 app.get('/', (req, res) => res.render('index'));
 
 app.post('/pay/:item', (req, res) => {
+
+  // Get item from params
   const item = req.params.item.toString()
 
+  // Get item details from database
   connection.db.collection("shop-items", function (err, collection) {
     collection.find({ sku: item }).toArray(function (err, data) {
       if (data.length < 1) {
@@ -67,12 +70,15 @@ app.post('/pay/:item', (req, res) => {
             },
           ],
         };
+
+        // Open paypal payment
         paypal.payment.create(create_payment_json, function (error, payment) {
           if (error) {
             throw error;
           } else {
             for (let i = 0; i < payment.links.length; i++) {
               if (payment.links[i].rel === 'approval_url') {
+                // Redirect to checkout
                 res.redirect(payment.links[i].href);
               }
             }
@@ -88,10 +94,12 @@ app.get('/success', (req, res) => {
   const paymentId = req.query.paymentId;
   const itemId = req.query.itemSku
 
+  // Find details of bought item in database
   connection.db.collection("shop-items", function (err, collection) {
     collection.find({ sku: itemId }).toArray(function (err, data) {
       const itemDetails = data[0]
       const itemPrice = convertToEuros(itemDetails.price)
+      // Set item details
       const execute_payment_json = {
         payer_id: payerId,
         transactions: [
@@ -104,21 +112,20 @@ app.get('/success', (req, res) => {
         ],
       };
 
-
+      // Execute paypal payment
       paypal.payment.execute(paymentId, execute_payment_json, function (error, payment) {
         if (error) {
           console.log(error.response);
           throw error;
         } else {
-          // console.log(JSON.stringify(payment));
-
-          //
+          // Check if paid price is the same as the price from the db
           if (payment.transactions[0].amount.total == itemPrice) {
             console.log('Everything alright', "Item Price :", itemPrice, "Paypal price", payment.transactions[0].amount.total)
           } else {
             console.log('Not good', "Item Price :", itemPrice, "Paypal price", payment.transactions[0].amount.total)
           }
 
+          // Create new payment
           const newPayment = new Payment({
             payId: payment.id,
             paymentState: payment.state,
@@ -128,14 +135,15 @@ app.get('/success', (req, res) => {
           });
 
           newPayment.collection.findOne({ payId: payment.id }, function (err, payment) {
-            if (payment.length == 0) {
+            // Only insert payment if it hasn't already been done
+            if (!payment) {
               newPayment.save(function (err) {
                 if (err) return handleError(err);
                 console.log('Payment saved to database')
                 res.send('Success');
               });
             } else {
-              res.send('Already in db');
+              res.send('Already purchased');
             }
           })
         }
@@ -148,10 +156,6 @@ app.get('/cancel', (req, res) => res.send('Cancelled'));
 
 function convertToEuros(cents) {
   return cents / 100
-}
-
-function eurosToCents(euros) {
-  return euros * 100
 }
 
 app.listen(3000, () => console.log('Server Started'));
