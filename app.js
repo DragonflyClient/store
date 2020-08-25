@@ -18,6 +18,8 @@ paypal.configure({
   client_secret: 'EKCpsBMeOYdnADAoZEVdRdhKT9NKeoaMaKg34ZsCLHxzOZAd8n4zgN5SA7FC9kwQGC3w-FMWN55Eqred',
 });
 
+const PORT = 1550
+
 const app = express();
 
 app.set('view engine', 'ejs');
@@ -46,8 +48,8 @@ app.post('/pay/:item', (req, res) => {
             payment_method: 'paypal',
           },
           redirect_urls: {
-            return_url: `http://localhost:3000/success?itemSku=${item}`,
-            cancel_url: 'http://localhost:3000/cancel',
+            return_url: `http://localhost:${PORT}/success?itemSku=${item}`,
+            cancel_url: `http://localhost:${PORT}/cancel`,
           },
           transactions: [
             {
@@ -158,4 +160,4 @@ function convertToEuros(cents) {
   return cents / 100
 }
 
-app.listen(3000, () => console.log('Server Started'));
+app.listen(PORT, () => console.log('Server Started on port ', PORT));
