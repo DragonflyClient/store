@@ -9,6 +9,7 @@
   "author": "jwli",
   "license": "MIT",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "ejs": "^2.5.7",
     "express": "^4.16.2",
     "mongoose": "^5.10.0",
