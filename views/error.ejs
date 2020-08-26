@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+    <link rel="stylesheet" href="<%= process.env.URL %>/stylesheets/success.css">
+</head>
+
+<body>
+    <div class="error-cont">
+        <i class="fas fa-times"></i>
+        <h1>Whoops.</h1>
+        <p><%= message %></p>
+        <p>Click <a href="<%= process.env.URL %>">here</a> to get back to the home page</p>
+    </div>
+
+    <!-- Fontawesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js"></script>
+</body>
+
+</html>
