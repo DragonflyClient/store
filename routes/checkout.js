@@ -5,8 +5,6 @@ const paypal = require('paypal-rest-sdk');
 const stripe = require('stripe')(process.env.STRIPE_SECRET)
 const Payment = require('../models/Payment')
 
-const endpointSecret = 'whsec_NNT8GUETHNZQzqzfdE0ELtclDkurLtF7';
-
 paypal.configure({
     mode: 'sandbox', //sandbox or live
     client_id: process.env.PAYPAL_CLIENT_ID,
@@ -84,6 +82,8 @@ router.post('/paypal/:item', (req, res) => {
 
 // Stripe payment route
 router.post('/stripe/:item', async (req, res) => {
+    const item = req.params.item.toString()
+    const token = req.cookies['dragonfly-token']
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [
@@ -99,6 +99,12 @@ router.post('/stripe/:item', async (req, res) => {
                 quantity: 1,
             },
         ],
+        payment_intent_data: {
+            metadata: {
+                item_id: item,
+                dragonfly_token: token
+            }
+        },
         mode: "payment",
         success_url: "https://example.com/success",
         cancel_url: "https://example.com/cancel",
