@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { connection, findItemById } = require('../mongoose.js')
+const { findItemById } = require('../mongoose.js')
 const paypal = require('paypal-rest-sdk');
 const stripe = require('stripe')(process.env.STRIPE_SECRET)
 const Payment = require('../models/Payment')
@@ -43,11 +43,20 @@ router.post('/stripe/:item_id', async (req, res) => {
             }
         },
         mode: "payment",
-        success_url: "http://localhost:1550",
-        cancel_url: "http://localhost:1550",
+        success_url: `${process.env.URL}/checkout/stripe/success?item_id=${itemId}`,
+        cancel_url: `${process.env.URL}/checkout/cancel`,
     })
     res.json({ id: session.id });
 })
+
+// Stripe success route
+router.get('/stripe/success', async (req, res) => {
+    const itemId = req.query.item_id
+    const item = await findItemById(itemId)
+    const itemPrice = convertToEuros(item.price)
+
+    res.render('success', { product: item.name, price: itemPrice, port: process.env.PORT });
+});
 
 // PayPal payment route
 router.post('/paypal/:item_id', async (req, res) => {
@@ -114,8 +123,8 @@ router.post('/paypal/:item_id', async (req, res) => {
 router.get('/paypal/success', async (req, res) => {
     const payerId = req.query.PayerID;
     const paymentId = req.query.paymentId;
-    const itemId = req.query.item_id
 
+    const itemId = req.query.item_id
     const item = await findItemById(itemId)
     const itemPrice = convertToEuros(item.price)
 
