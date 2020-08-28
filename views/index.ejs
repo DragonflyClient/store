@@ -1,28 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-  <title>PayPal Node App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="<%= process.env.URL %>/stylesheets/index.css">
+    <script src="https://js.stripe.com/v3/"></script>
 </head>
 
 <body>
-  <div>
-    <h1>Dragon Wings</h1>
-    <h2>Buy For 10€</h2>
-    <form action="/checkout/paypal/001" method="post">
-      <input type="submit" value="Buy" />
-    </form>
-  </div>
-  <div>
-    <h1>Partner Cloak</h1>
-    <h2>Buy For 7.50€</h2>
-    <form action="/checkout/paypal/002" method="post">
-      <input type="submit" value="Buy" />
-    </form>
-  </div>
+
+    <h2>Modal Example</h2>
+    <div style="display: flex;">
+        <div class="shop-item" data-item="001">
+            <div class="shop-item-image"></div>
+            <div class="shop-item-details">
+                <h2 class="shop-item-name">Dragon Wings</h2>
+                <div class="shop-item-price-wrapper" style="position: relative;">
+                    <h4 class="shop-item-price">9.99 <span class="shop-item-currency">€</span></h4>
+                    <h4 class="shop-item-price-old"
+                        style="position: absolute; top: -20px; text-align: right; width: 100%; color: var(--clr-pdark); text-decoration: line-through; font-weight: 400;">
+                        14.99 <span class="shop-item-currency">€</span></h4>
+                </div>
+            </div>
+            <div class="shop-item-tags">
+
+            </div>
+            <div class="shop-item-description">
+                <p>I believe I can fly. Only with the super hot Dragonfly Wings! Change color, size, and more to
+                make your
+                friends jealous.</p>
+            </div>
+            <button class="btn btn-modal" data-item="001">Checkout</button>
+            <!-- The Modal -->
+            <div class="checkout-modal checkout-modal-001" class="modal">
+                <!-- Modal content -->
+                <div class="modal">
+                    <span class="close">&times;</span>
+                    <div class="modal-content">
+                        <div class="modal-description-payment">
+                            <div class="modal-item-description">
+                                <h2>Dragon Wings</h2>
+                                <h4 class="modal-shop-item-price shop-item-price">9.99 <span class="shop-item-currency">€</span></h4>
+                            </div>
+                        </div>
+                        <!-- <label for="">Discount or partner code<br>
+                            <input type="text" placeholder="3123 31232 42">
+                        </label> -->
+                        <p class="text-gray privacy-notice">By purchasing an item in the Dragonfly Store, you accept Inception Cloud's privacy policy and agree that payment 
+                            information and your personal data will be stored indefinitely. Your data will be stored securely and will not be passed on to third parties.</p>
+                            
+                        <p class="payment-warning"></p><br>
+                        <div class="modal-payment-method">
+                            <label class="btn btn-payment-method btn-paypal"><i class="fab fa-paypal"></i>&nbsp; PayPal
+                                <input name="checkout-method-001" class="payment-input" type="radio" required value="paypal"></input>
+                            </label>
+                            <label class="btn btn-payment-method btn-card"><i class="fas fa-credit-card"></i>&nbsp; Card
+                                <input name="checkout-method-001" class="payment-input"  type="radio" value="card"></input>
+                            </label>
+                        </div>
+                        <button class="btn btn-checkout" data-item="001">Buy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="shop-item" data-item="002">
+            <div class="shop-item-image"></div>
+            <div class="shop-item-details">
+                <h2 class="shop-item-name">BauAPI Cloak</h2>
+                <div class="shop-item-price-wrapper" style="position: relative;">
+                    <h4 class="shop-item-price">14.99 <span class="shop-item-currency">€</span></h4>
+                    <h4 class="shop-item-price-old"
+                        style="position: absolute; top: -20px; text-align: right; width: 100%; color: var(--clr-pdark); text-decoration: line-through; font-weight: 400;">
+                        24.99 <span class="shop-item-currency">€</span></h4>
+                </div>
+            </div>
+            <div class="shop-item-tags">
+
+            </div>
+            <div class="shop-item-description">
+                <p>A great Cape</p>
+            </div>
+            <button class="btn btn-modal" data-item="002">Checkout</button>
+            <!-- The Modal -->
+            <div class="checkout-modal checkout-modal-002" class="modal">
+                <!-- Modal content -->
+                <div class="modal">
+                    <span class="close">&times;</span>
+                    <div class="modal-content">
+                        <div class="modal-description-payment">
+                            <div class="modal-item-description">
+                                <h2>BauAPI Cloak</h2>
+                                <h4 class="modal-shop-item-price shop-item-price">14.99 <span class="shop-item-currency">€</span></h4>
+                            </div>
+                        </div>
+                        <!-- <label for="">Discount or partner code<br>
+                            <input type="text" placeholder="3123 31232 42">
+                        </label> -->
+                        <p class="text-gray privacy-notice">By purchasing an item in the Dragonfly Store, you accept Inception Cloud's privacy policy and agree that payment 
+                            information and your personal data will be stored indefinitely. Your data will be stored securely and will not be passed on to third parties.</p>
+                            
+                        <p class="payment-warning"></p><br>
+                        <div class="modal-payment-method">
+                            <label class="btn btn-payment-method btn-paypal"><i class="fab fa-paypal"></i>&nbsp; PayPal
+                                <input name="checkout-method-002" class="payment-input" type="radio" required value="paypal"></input>
+                            </label>
+                            <label class="btn btn-payment-method btn-card"><i class="fas fa-credit-card"></i>&nbsp; Card
+                                <input name="checkout-method-002" class="payment-input"  type="radio" value="card"></input>
+                            </label>
+                        </div>
+                        <button class="btn btn-checkout" data-item="002">Buy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+    </script>
+
+    <!-- Fontawesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js"></script>
+    <script src="/javascript/index.js">
+    </script>
+
 </body>
 
 </html>
