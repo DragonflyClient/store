@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const connection = require('../mongoose.js')
+const { connection, findItemById } = require('../mongoose.js')
 const paypal = require('paypal-rest-sdk');
 const stripe = require('stripe')(process.env.STRIPE_SECRET)
 const Payment = require('../models/Payment')
@@ -81,33 +81,35 @@ router.post('/paypal/:item', (req, res) => {
 });
 
 // Stripe payment route
-router.post('/stripe/:item', async (req, res) => {
-    const item = req.params.item.toString()
+router.post('/stripe/:item_id', async (req, res) => {
+    const itemId = req.params.item_id.toString()
     const token = req.cookies['dragonfly-token']
+
+    const item = await findItemById(itemId)
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [
             {
                 price_data: {
-                    currency: "eur",
+                    currency: item.currency,
                     product_data: {
-                        name: "T-shirt",
-                        description: 'Ein cooles T-Shirt zum anziehen!'
+                        name: item.name,
+                        description: item.description
                     },
-                    unit_amount: 2000,
+                    unit_amount: item.price,
                 },
                 quantity: 1,
             },
         ],
         payment_intent_data: {
             metadata: {
-                item_id: item,
+                item_id: itemId,
                 dragonfly_token: token
             }
         },
         mode: "payment",
-        success_url: "https://example.com/success",
-        cancel_url: "https://example.com/cancel",
+        success_url: "http://localhost:1550",
+        cancel_url: "http://localhost:1550",
     })
     res.json({ id: session.id });
 })
