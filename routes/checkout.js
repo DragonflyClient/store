@@ -43,7 +43,7 @@ router.post('/stripe/:item_id', async (req, res) => {
             }
         },
         mode: "payment",
-        success_url: `${process.env.URL}/checkout/stripe/success?item_id=${itemId}`,
+        success_url: `${process.env.URL}/checkout/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.URL}/checkout/cancel`,
     })
     res.json({ id: session.id });
@@ -51,11 +51,47 @@ router.post('/stripe/:item_id', async (req, res) => {
 
 // Stripe success route
 router.get('/stripe/success', async (req, res) => {
-    const itemId = req.query.item_id
+    const sessionId = req.query.session_id
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const intent = await stripe.paymentIntents.retrieve(session.payment_intent);
+
+    console.log(intent)
+
+    // check intent status
+    if (intent.status !== 'succeeded') return res.render('error', {message: 'Payment did not succeed!'});
+
+    const itemId = intent.metadata.item_id
     const item = await findItemById(itemId)
     const itemPrice = convertToEuros(item.price)
 
-    res.render('success', { product: item.name, price: itemPrice, port: process.env.PORT });
+    // check amount received
+    if (!intent.amount_received === item.price) return res.render('error', {message: 'Incorrect price received!'});
+
+    console.log('Everything alright', "Item price:", item.price, "| Received amount:", intent.amount_received)
+
+    // Create new payment
+    const newPayment = new Payment({
+        provider: 'STRIPE',
+        payId: intent.id,
+        paymentState: intent.status,
+        creationDate: intent.created,
+        itemName: item.name,
+        itemSku: item.id
+    });
+
+    newPayment.collection.findOne({payId: intent.id}, function (err, payment) {
+        // Only insert payment if it hasn't already been done
+        if (!payment) {
+            newPayment.save(function (err) {
+                if (err) return res.render('error', {message: err});
+                console.log(item.name)
+                console.log('Payment saved to database')
+                res.render('success', {product: item.name, price: itemPrice, port: process.env.PORT});
+            });
+        } else {
+            res.render('error', {message: 'The article has already been purchased with this payment ID.'});
+        }
+    })
 });
 
 // PayPal payment route
@@ -152,6 +188,7 @@ router.get('/paypal/success', async (req, res) => {
                 console.log('Everything alright', "Item Price:", itemPrice, "| Paypal price:", payment.transactions[0].amount.total)
                 // Create new payment
                 const newPayment = new Payment({
+                    provider: 'PAYPAL',
                     payId: payment.id,
                     paymentState: payment.state,
                     creationDate: payment.create_time,
