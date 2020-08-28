@@ -7,7 +7,7 @@ mongoose.connect(`mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD
 const connection = mongoose.connection
 
 function findItemById(itemId) {
-    return connection.db.collection("shop-items").findOne({ sku: itemId })
+    return mongoose.connection.db.collection("shop-items").findOne({ id: itemId })
 }
 
 exports.connection = connection
