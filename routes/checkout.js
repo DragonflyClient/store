@@ -2,7 +2,10 @@ const express = require('express')
 const router = express.Router()
 const connection = require('../mongoose.js')
 const paypal = require('paypal-rest-sdk');
+const stripe = require('stripe')(process.env.STRIPE_SECRET)
 const Payment = require('../models/Payment')
+
+const endpointSecret = 'whsec_NNT8GUETHNZQzqzfdE0ELtclDkurLtF7';
 
 paypal.configure({
     mode: 'sandbox', //sandbox or live
@@ -78,6 +81,30 @@ router.post('/paypal/:item', (req, res) => {
         })
     });
 });
+
+// Stripe payment route
+router.post('/stripe/:item', async (req, res) => {
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+            {
+                price_data: {
+                    currency: "eur",
+                    product_data: {
+                        name: "T-shirt",
+                        description: 'Ein cooles T-Shirt zum anziehen!'
+                    },
+                    unit_amount: 2000,
+                },
+                quantity: 1,
+            },
+        ],
+        mode: "payment",
+        success_url: "https://example.com/success",
+        cancel_url: "https://example.com/cancel",
+    })
+    res.json({ id: session.id });
+})
 
 router.get('/success', (req, res) => {
     const payerId = req.query.PayerID;
