@@ -3,6 +3,7 @@ const checkoutRoute = require('./routes/checkout')
 const connection = require('./mongoose')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
+const mongoose = require('mongoose')
 const cors = require('cors')
 
 const ejs = require('ejs');
@@ -20,7 +21,14 @@ app.use(cookieParser())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
-app.get('/', (req, res) => res.render('index'));
+app.get('/', async (req, res) => {
+    const results = await mongoose.connection.db.collection("shop-items").find({})
+
+    let items = []
+    await results.forEach(result => items.push(result))
+    console.log(items)
+    res.render('index', { shopItems: items, test: 'hey!' })
+});
 
 bodyParser.raw({ type: 'application/json' })
 app.use('/checkout', checkoutRoute)
