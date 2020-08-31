@@ -187,17 +187,18 @@ h3 {
     width: 100%;
     height: 230px;
     object-fit: cover;
-    background: url('/img/dragon_wings_front.png');
     background-position: center;
     background-size: cover;
     transition: 0.2s cubic-bezier(0.445, 0.05, 0.55, 0.95);
 }
 
 .shop-item-image:hover {
-    background: url('/img/dragon_wings_back.png');
     background-repeat: no-repeat;
+    animation: flyIn .5s ease;
     background-size: 100%;
 }
+
+@keyframes flyIn {}
 
 .shop-item-colorpicker {
     z-index: 1;
