@@ -1,0 +1,52 @@
+<div class="shop-item" data-item="<%= item.id %>">
+            <div class="shop-item-image shop-item-image-<%= item.id %>" ></div>
+            <div class="shop-item-details">
+                <h2 class="shop-item-name"><%= item.name %></h2>
+                <div class="shop-item-price-wrapper" style="position: relative;">
+                    <h4 class="shop-item-price"><%= (item.originalPrice / 100).toFixed(2) %> <span class="shop-item-currency"><%= item.currency %></span></h4>
+                    <h4 class="shop-item-price-old"
+                        style="position: absolute; top: -20px; text-align: right; width: 100%; color: var(--clr-pdark); text-decoration: line-through; font-weight: 400;">
+                        <%= (item.price / 100).toFixed(2) %> <span class="shop-item-currency"><%= item.currency %></span></h4>
+                </div>
+            </div>
+            <div class="shop-item-tags">
+
+            </div>
+            <div class="shop-item-description">
+                <p><%= item.description %></p>
+            </div>
+            <button class="btn btn-modal" data-item="<%= item.id %>">Checkout</button>
+            <!-- The Modal -->
+            <div class="checkout-modal checkout-modal-<%= item.id %>" class="modal">
+                <!-- Modal content -->
+                <div class="modal">
+                    <span class="close">&times;</span>
+                    <div class="modal-content">
+                        <div class="modal-description-payment">
+                            <div class="modal-item-description">
+                                <h2><%= item.name %></h2>
+                                <h4 class="modal-shop-item-price shop-item-price"><%= item.price %> <span class="shop-item-currency"><%= item.currency %></span></h4>
+                            </div>
+                        </div>
+                        <!-- <label for="">Discount or partner code<br>
+                            <input type="text" placeholder="3123 31232 42">
+                        </label> -->
+                        <p class="text-gray privacy-notice">By purchasing an item in the Dragonfly Store, you accept Inception Cloud's privacy policy and agree that payment 
+                            information and your personal data will be stored indefinitely. Your data will be stored securely and will not be passed on to third parties.</p>
+                            
+                        <p class="payment-warning"></p><br>
+                        <div class="modal-payment-method">
+                            <label class="btn btn-payment-method btn-paypal"><i class="fab fa-paypal"></i>&nbsp; PayPal
+                                <input name="checkout-method-<%= item.id %>" class="payment-input" type="radio" required value="paypal"></input>
+                            </label>
+                            <label class="btn btn-payment-method btn-card"><i class="fas fa-credit-card"></i>&nbsp; Card
+                                <input name="checkout-method-<%= item.id %>" class="payment-input"  type="radio" value="card"></input>
+                            </label>
+                        </div>
+                        <button class="btn btn-checkout" data-item="<%= item.id %>">Buy</button>
+                    </div>
+                </div>
+            </div>
+            <style>.shop-item-image-<%= item.id %> {background-image:url('<%= item.images.front %>');}.shop-item-image-<%= item.id %>:hover {background-image: url('<%= item.images.back %>') !important;}
+            </style>
+        </div>
