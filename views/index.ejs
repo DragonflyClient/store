@@ -10,6 +10,10 @@
 <body>
 
     <h2>Modal Example</h2>
+    <h1><% test %> </h1>
+    <% shopItems.forEach(item => { %>
+        <%- include('partials/item', {item: item}); %>
+    <% }); %> 
     <div style="display: flex;">
         <div class="shop-item" data-item="001">
             <div class="shop-item-image"></div>
