@@ -19,6 +19,9 @@ router.get('/', (req, res) => {
 router.post('/stripe/:item_id', async (req, res) => {
     const itemId = req.params.item_id.toString()
     const token = req.cookies['dragonfly-token']
+    if (!token) {
+        res.render('error', { message: 'Please log in to purchase an item from the Dragonfly Store.' })
+    }
 
     const item = await findItemById(itemId)
     const session = await stripe.checkout.sessions.create({
@@ -56,21 +59,21 @@ router.get('/stripe/success', async (req, res) => {
     const intent = await stripe.paymentIntents.retrieve(session.payment_intent);
 
     // check intent status
-    if (intent.status !== 'succeeded') return res.render('error', {message: 'Payment did not succeed!'});
+    if (intent.status !== 'succeeded') return res.render('error', { message: 'Payment did not succeed!' });
 
     const itemId = intent.metadata.item_id
     const item = await findItemById(itemId)
 
     // check if item was found
-    if (item == null) return res.render('error', {message: 'Item not found!'});
+    if (item == null) return res.render('error', { message: 'Item not found!' });
 
     // check amount received
-    if (intent.amount_received !== item.price) return res.render('error', {message: 'Incorrect price received!'});
+    if (intent.amount_received !== item.price) return res.render('error', { message: 'Incorrect price received!' });
 
     const token = req.cookies['dragonfly-token']
 
     // check dragonfly token
-    if (intent.metadata.dragonfly_token !== token) return res.render('error', {message: 'Invalid Dragonfly authentication token'})
+    if (intent.metadata.dragonfly_token !== token) return res.render('error', { message: 'Invalid Dragonfly authentication token' })
 
     console.log('Everything alright', "Item price:", item.price, "| Received amount:", intent.amount_received)
 
@@ -81,7 +84,7 @@ router.get('/stripe/success', async (req, res) => {
         paymentState: intent.status,
         receivedAmount: intent.amount_received,
         receivedCurrency: intent.currency,
-        creationDate: intent.created,
+        creationDate: intent.created * 1000,
         dragonflyToken: token,
         itemId: item.id,
         itemName: item.name,
@@ -89,17 +92,17 @@ router.get('/stripe/success', async (req, res) => {
         itemCurrency: item.currency
     });
 
-    newPayment.collection.findOne({payId: intent.id}, function (err, payment) {
+    newPayment.collection.findOne({ payId: intent.id }, function (err, payment) {
         // Only insert payment if it hasn't already been done
         if (!payment) {
             newPayment.save(function (err) {
-                if (err) return res.render('error', {message: err});
+                if (err) return res.render('error', { message: err });
                 console.log(item.name)
                 console.log('Payment saved to database')
-                res.render('success', {product: item.name, price: convertToEuros(item.price), port: process.env.PORT});
+                res.render('success', { product: item.name, price: convertToEuros(item.price), port: process.env.PORT });
             });
         } else {
-            res.render('error', {message: 'The article has already been purchased with this payment ID.'});
+            res.render('error', { message: 'The article has already been purchased with this payment ID.' });
         }
     })
 });
@@ -208,7 +211,7 @@ router.get('/paypal/success', async (req, res) => {
                     paymentState: payment.state,
                     receivedAmount: payment.transactions[0].amount.total * 100,
                     receivedCurrency: payment.transactions[0].item_list.items[0].currency,
-                    creationDate: payment.create_time,
+                    creationDate: new Date(payment.create_time).getTime(),
                     dragonflyToken: token,
                     itemId: itemId,
                     itemName: item.name,
