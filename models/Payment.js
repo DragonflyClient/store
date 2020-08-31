@@ -22,7 +22,7 @@ const PaymentSchema = mongoose.Schema({
         required: true
     },
     creationDate: {
-        type: String,
+        type: Number,
         required: true
     },
     dragonflyToken: {
