@@ -232,6 +232,16 @@ h3 {
   color: #37393a;
 }
 
+.shop-item-price-old {
+  position: absolute;
+  top: -20px;
+  text-align: right;
+  width: 100%;
+  color: var(--clr-pdark);
+  text-decoration: line-through;
+  font-weight: 400;
+}
+
 .shop-item-description {
   width: 100%;
   font-size: 1.15rem;
