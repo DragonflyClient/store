@@ -41,6 +41,7 @@ function openCheckout(item) {
   modal.style.display = 'block';
 
   const paymentMethodInputs = modal.querySelectorAll(`.payment-input`);
+  const emailInput = modal.querySelector('.payment-email')
   const warningDiv = modal.querySelector('.payment-warning');
 
   const buyButton = modal.querySelector('.btn-checkout');
@@ -63,6 +64,7 @@ function openCheckout(item) {
   buyButton.addEventListener('click', (e) => {
     const method = paymentMethod;
     const itemSku = e.target.dataset.item;
+    const emailAddress = emailInput.value
 
     fetch("https://api.playdragonfly.net/v1/authentication/cookie/token", {
       method: 'POST',
@@ -72,8 +74,8 @@ function openCheckout(item) {
         res.json().then(res => {
           console.log(res)
           if (res.success) {
-            if (method === 'card') checkoutStripe(itemSku);
-            else if (method == 'paypal') createCheckout(itemSku, method);
+            if (method === 'card') checkoutStripe(itemSku, emailAddress);
+            else if (method == 'paypal') createCheckout(itemSku, method, emailAddress);
             else {
               warningDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please select a payment method`;
               console.log('Select payment method');
@@ -101,12 +103,9 @@ function redirectPost(url, data) {
   form.submit();
 }
 
-function checkout(method, itemSku) {
-}
-
-function createCheckout(item, payment) {
+function createCheckout(item, payment, email) {
   console.log(payment);
-  redirectPost(`https://store.playdragonfly.net/checkout/${payment}/${item}`);
+  redirectPost(`https://store.playdragonfly.net/checkout/${payment}/${item}?email=${email}`);
 }
 
 // Stripe payment
@@ -117,10 +116,10 @@ var stripe = Stripe(
 );
 var checkoutButton = document.getElementById('checkout-button');
 
-function checkoutStripe(itemSku) {
+function checkoutStripe(itemSku, email) {
   // Create a new Checkout Session using the server-side endpoint you
   // created in step 3.
-  fetch(`https://store.playdragonfly.net//checkout/stripe/${itemSku}`, {
+  fetch(`https://store.playdragonfly.net//checkout/stripe/${itemSku}?email=${email}`, {
     method: 'POST',
   })
     .then(function (response) {
