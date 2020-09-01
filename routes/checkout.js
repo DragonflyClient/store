@@ -17,6 +17,8 @@ router.get('/', (req, res) => {
 
 // Stripe payment route
 router.post('/stripe/:item_id', async (req, res) => {
+  const email = req.query.email
+  console.log(email)
   const itemId = req.params.item_id.toString();
   const token = req.cookies['dragonfly-token'];
   if (!token) {
