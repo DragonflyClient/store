@@ -59,14 +59,27 @@ function openCheckout(item) {
     const method = paymentMethod;
     const itemSku = e.target.dataset.item;
 
-    if (method === 'card') {
-      checkoutStripe(item);
-    } else if (method == 'paypal') {
-      createCheckout(itemSku, method);
-    } else {
-      warningDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please select a payment method`;
-      console.log('Select payment method');
-    }
+    fetch("https://api.playdragonfly.net/v1/authentication/cookie/token", {
+      method: 'POST',
+      credentials: 'include'
+    }).then(res => {
+      if (res.status === 200) {
+        res.json().then(res => {
+          console.log(res)
+        })
+      } else {
+        console.log(res.error)
+      }
+    })
+
+    // if (method === 'card') {
+    //   checkoutStripe(item);
+    // } else if (method == 'paypal') {
+    //   createCheckout(itemSku, method);
+    // } else {
+    //   warningDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please select a payment method`;
+    //   console.log('Select payment method');
+    // }
   });
 }
 
@@ -102,17 +115,24 @@ function checkoutStripe(itemSku) {
       return response.json();
     })
     .then(function (session) {
-      return stripe.redirectToCheckout({ sessionId: session.id });
-    })
-    .then(function (result) {
-      // If `redirectToCheckout` fails due to a browser or network
-      // error, you should display the localized error message to your
-      // customer using `error.message`.
-      if (result.error) {
-        alert(result.error.message);
+      console.log(session.error)
+      if (session.error) {
+        location.href = 'https://playdragonfly.net/login?ref=https://store.playdragonfly.net'
+        console.log('Error')
+      } else {
+        stripe.redirectToCheckout({ sessionId: session.id })
+          .then(function (result) {
+            // If `redirectToCheckout` fails due to a browser or network
+            // error, you should display the localized error message to your
+            // customer using `error.message`.
+            if (result.error) {
+              alert(result.error.message);
+            }
+          })
+          .catch(function (error) {
+            console.error('Error:', error);
+          });
       }
     })
-    .catch(function (error) {
-      console.error('Error:', error);
-    });
+
 }
