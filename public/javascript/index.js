@@ -6,7 +6,10 @@ window.addEventListener('load', () => {
   const allInputs = document.querySelectorAll('input');
   allInputs.forEach((input) => {
     console.log(input);
-    input.value = input.defaultValue || input.defaultChecked;
+    if (input.type !== "text" && input.type !== "email") {
+      input.value = input.defaultValue || input.defaultChecked;
+
+    }
   });
 });
 
@@ -37,7 +40,7 @@ function openCheckout(item) {
   modal.style.opacity = '1';
   modal.style.display = 'block';
 
-  const paymentMethodInputs = modal.querySelectorAll(`[name]`);
+  const paymentMethodInputs = modal.querySelectorAll(`.payment-input`);
   const warningDiv = modal.querySelector('.payment-warning');
 
   const buyButton = modal.querySelector('.btn-checkout');
@@ -69,11 +72,9 @@ function openCheckout(item) {
         res.json().then(res => {
           console.log(res)
           if (res.success) {
-            if (method === 'card') {
-              checkoutStripe(itemSku);
-            } else if (method == 'paypal') {
-              createCheckout(itemSku, method);
-            } else {
+            if (method === 'card') checkoutStripe(itemSku);
+            else if (method == 'paypal') createCheckout(itemSku, method);
+            else {
               warningDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please select a payment method`;
               console.log('Select payment method');
             }
@@ -84,6 +85,7 @@ function openCheckout(item) {
         })
       } else {
         console.log(res.error)
+        warningDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Internal server error. Please try again later.'
       }
     })
 
