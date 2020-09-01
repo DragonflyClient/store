@@ -22,15 +22,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.get('/', async (req, res) => {
-  const results = await mongoose.connection.db.collection('shop-items').find({});
+    const results = await mongoose.connection.db.collection('shop-items').find({});
 
-  let items = [];
-  await results.forEach((result) => items.push(result));
-  console.log(items);
-  res.render('index', { shopItems: items, test: 'hey!' });
+    let items = [];
+    await results.forEach((result) => items.push(result));
+    console.log(items);
+    res.render('index', { shopItems: items, test: 'hey!' });
 });
 
 bodyParser.raw({ type: 'application/json' });
 app.use('/checkout', checkoutRoute);
 
-app.listen(process.env.PORT, () => console.log('Server Started on port ', process.env.PORT));
+app.listen(process.env.PORT, () => console.log(`Server Started on http://localhost:${process.env.PORT}`));
+
