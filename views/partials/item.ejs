@@ -4,7 +4,7 @@
                 <h2 class="shop-item-name"><%= item.name %></h2>
                 <div class="shop-item-price-wrapper" style="position: relative;">
                     <h4 class="shop-item-price"><%= (item.originalPrice / 100).toFixed(2) %> <span class="shop-item-currency"><%= item.currency %></span></h4>
-                <h4 class="shop-item-price-old" style='display: none <%= item.price == item.originalPrice ? "none" : "block" %>'>
+                <h4 class="shop-item-price-old" style='display: <%= item.price == item.originalPrice ? "none" : "block" %>'>
                         <%= (item.price / 100).toFixed(2) %> <span class="shop-item-currency"><%= item.currency %></span></h4>
                 </div>
             </div>
