@@ -20,37 +20,38 @@ router.post('/stripe/:item_id', async (req, res) => {
   const itemId = req.params.item_id.toString();
   const token = req.cookies['dragonfly-token'];
   if (!token) {
+    res.json({ error: true, message: 'You have to be logged in to purchase an item from the Dragonfly store.' });
     console.log('no dragonfly-token');
-    res.render('error', { message: 'You have to be logged in to purchase an item from the Dragonfly store.' });
-  } else {
-    const item = await findItemById(itemId);
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: item.currency,
-            product_data: {
-              name: item.name,
-              description: item.description,
-            },
-            unit_amount: item.price,
-          },
-          quantity: 1,
-        },
-      ],
-      payment_intent_data: {
-        metadata: {
-          item_id: itemId,
-          dragonfly_token: token,
-        },
-      },
-      mode: 'payment',
-      success_url: `${process.env.URL}/checkout/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.URL}/checkout/cancel`,
-    });
-    res.json({ id: session.id });
+    return
   }
+  const item = await findItemById(itemId);
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price_data: {
+          currency: item.currency,
+          product_data: {
+            name: item.name,
+            description: item.description,
+          },
+          unit_amount: item.price,
+        },
+        quantity: 1,
+      },
+    ],
+    payment_intent_data: {
+      metadata: {
+        item_id: itemId,
+        dragonfly_token: token,
+      },
+    },
+    mode: 'payment',
+    success_url: `${process.env.URL}/checkout/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.URL}/checkout/cancel`,
+  });
+  res.json({ id: session.id });
+
 });
 
 // Stripe success route

@@ -52,7 +52,9 @@ function openCheckout(item) {
     input.addEventListener('change', (e) => {
       paymentMethod = e.target.value;
       console.log(paymentMethod);
-      warningDiv.innerHTML = ``;
+      if (warningDiv.textContent.indexOf('Please select a payment method') > -1) {
+        warningDiv.innerText = ``;
+      }
     });
   });
   buyButton.addEventListener('click', (e) => {
@@ -66,20 +68,26 @@ function openCheckout(item) {
       if (res.status === 200) {
         res.json().then(res => {
           console.log(res)
+          if (res.success) {
+            if (method === 'card') {
+              checkoutStripe(itemSku);
+            } else if (method == 'paypal') {
+              createCheckout(itemSku, method);
+            } else {
+              warningDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please select a payment method`;
+              console.log('Select payment method');
+            }
+          }
+          else {
+            console.log(res.error, 'not logged in'); warningDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> You have to be logged in to purchase an item from the Dragonfly store.'
+          }
         })
       } else {
         console.log(res.error)
       }
     })
 
-    // if (method === 'card') {
-    //   checkoutStripe(item);
-    // } else if (method == 'paypal') {
-    //   createCheckout(itemSku, method);
-    // } else {
-    //   warningDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> Please select a payment method`;
-    //   console.log('Select payment method');
-    // }
+
   });
 }
 
@@ -91,9 +99,12 @@ function redirectPost(url, data) {
   form.submit();
 }
 
+function checkout(method, itemSku) {
+}
+
 function createCheckout(item, payment) {
   console.log(payment);
-  redirectPost(`http://localhost:1550/checkout/${payment}/${item}`);
+  redirectPost(`https://store.playdragonfly.net/checkout/${payment}/${item}`);
 }
 
 // Stripe payment
@@ -107,11 +118,10 @@ var checkoutButton = document.getElementById('checkout-button');
 function checkoutStripe(itemSku) {
   // Create a new Checkout Session using the server-side endpoint you
   // created in step 3.
-  fetch(`http://localhost:1550/checkout/stripe/${itemSku}`, {
+  fetch(`https://store.playdragonfly.net//checkout/stripe/${itemSku}`, {
     method: 'POST',
   })
     .then(function (response) {
-      console.log('here');
       return response.json();
     })
     .then(function (session) {

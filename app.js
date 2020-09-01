@@ -33,5 +33,5 @@ app.get('/', async (req, res) => {
 bodyParser.raw({ type: 'application/json' });
 app.use('/checkout', checkoutRoute);
 
-app.listen(process.env.PORT, () => console.log(`Server Started on http://localhost:${process.env.PORT}`));
+app.listen(process.env.PORT, () => console.log(`Server Started on ${process.env.URL}`));
 
