@@ -5,23 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="<%= process.env.URL %>/stylesheets/index.css">
     <script src="https://js.stripe.com/v3/"></script>
+    <title>Dragonfly Store</title>
+    <style>
+        .shop-item-image {
+            height: 230px;
+        }
+    </style>
 </head>
 
 <body>
 
     <h2>Modal Example</h2>
-    
+
     <div style="display: flex;">
-        
-    <% shopItems.forEach(item => { %>
+
+        <% shopItems.forEach(item => { %>
         <%- include('partials/item', {item: item}); %>
-    <% }); %> 
+        <% }); %>
 
-    <!-- Fontawesome -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js"></script>
-    <script src="/javascript/index.js">
-    </script>
+        <!-- Fontawesome -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js"></script>
+        <script src="/javascript/index.js"></script>
+        <style>
+            .shop-item-image:hover {
+                background-repeat: no-repeat;
+                background-color: lightslategray;
+                background-size: 100%;
+            }
 
+            .shop-item-image {
+                width: 100%;
+                height: 230px;
+                object-fit: cover;
+                background-color: lightslategray;
+                background-position: center;
+                background-size: cover;
+                transition: 0.15s cubic-bezier(0.445, 0.05, 0.55, 0.95);
+            }
+        </style>
 </body>
 
 </html>
