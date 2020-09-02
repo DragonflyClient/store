@@ -4,6 +4,18 @@ const { findItemById } = require('../mongoose.js');
 const paypal = require('paypal-rest-sdk');
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const Payment = require('../models/Payment');
+const nodemailer = require('nodemailer')
+const axios = require('axios')
+
+const drgnNoreplyEmail = {
+  user: process.env.DRGN_NOREPLY_EMAIL_USERNAME,
+  password: process.env.DRGN_NOREPLY_EMAIL_PASSWORD
+}
+
+const drgnAdminEmail = {
+  user: process.env.DRGN_ADMIN_EMAIL_USERNAME,
+  password: process.env.DRGN_ADMIN_EMAIL_PASSWORD
+}
 
 paypal.configure({
   mode: 'sandbox', //sandbox or live
@@ -18,7 +30,7 @@ router.get('/', (req, res) => {
 // Stripe payment route
 router.post('/stripe/:item_id', async (req, res) => {
   const email = req.query.email
-  console.log(email)
+  console.log(email, 'payment route')
   const itemId = req.params.item_id.toString();
   const token = req.cookies['dragonfly-token'];
   if (!token) {
@@ -46,6 +58,7 @@ router.post('/stripe/:item_id', async (req, res) => {
       metadata: {
         item_id: itemId,
         dragonfly_token: token,
+        email: email
       },
     },
     mode: 'payment',
@@ -66,7 +79,9 @@ router.get('/stripe/success', async (req, res) => {
   if (intent.status !== 'succeeded') return res.render('error', { message: 'Payment did not succeed!' });
 
   const itemId = intent.metadata.item_id;
+  const email = intent.metadata.email
   const item = await findItemById(itemId);
+  console.log(req.cookies, 'success route')
 
   // check if item was found
   if (item == null) return res.render('error', { message: 'Item not found!' });
@@ -86,6 +101,7 @@ router.get('/stripe/success', async (req, res) => {
   const newPayment = new Payment({
     provider: 'STRIPE',
     paymentId: intent.id,
+    payerEmail: email,
     paymentState: intent.status,
     receivedAmount: intent.amount_received,
     receivedCurrency: intent.currency,
@@ -97,14 +113,16 @@ router.get('/stripe/success', async (req, res) => {
     itemCurrency: item.currency,
   });
 
-  newPayment.collection.findOne({ payId: intent.id }, function (err, payment) {
+  newPayment.collection.findOne({ paymentId: intent.id }, function (err, payment) {
     // Only insert payment if it hasn't already been done
+    console.log(payment, 'payment')
     if (!payment) {
       newPayment.save(function (err) {
         if (err) return res.render('error', { message: err });
-        console.log(item.name);
+        sendEmail(newPayment, email)
         console.log('Payment saved to database');
         res.render('success', { product: item.name, price: convertToEuros(item.price), port: process.env.PORT });
+        // TODO: Send email with nodemailer
       });
     } else {
       res.render('error', { message: 'The article has already been purchased with this payment ID.' });
@@ -114,6 +132,8 @@ router.get('/stripe/success', async (req, res) => {
 
 // PayPal payment route
 router.post('/paypal/:item_id', async (req, res) => {
+  const email = req.query.email
+  console.log(email)
   // Get item from params
   const itemId = req.params.item_id.toString();
   const item = await findItemById(itemId);
@@ -136,7 +156,7 @@ router.post('/paypal/:item_id', async (req, res) => {
           payment_method: 'paypal',
         },
         redirect_urls: {
-          return_url: `${process.env.URL}/checkout/paypal/success?item_id=${itemId}`,
+          return_url: `${process.env.URL}/checkout/paypal/success?item_id=${itemId}&payerEmail=${email}`,
           cancel_url: `${process.env.URL}/checkout/cancel`,
         },
         transactions: [
@@ -181,8 +201,10 @@ router.post('/paypal/:item_id', async (req, res) => {
 // PayPal success route
 router.get('/paypal/success', async (req, res) => {
   const payerId = req.query.PayerID;
+  const payerEmail = req.query.payerEmail
   const paymentId = req.query.paymentId;
   const token = req.cookies['dragonfly-token'];
+  console.log(payerEmail, 'PAYER-EMAIL!')
 
   let itemId = req.query.item_id;
   let item = await findItemById(itemId);
@@ -224,6 +246,7 @@ router.get('/paypal/success', async (req, res) => {
         const newPayment = new Payment({
           provider: 'PAYPAL',
           paymentId: payment.id,
+          payerEmail: payerEmail,
           paymentState: payment.state,
           receivedAmount: payment.transactions[0].amount.total * 100,
           receivedCurrency: payment.transactions[0].item_list.items[0].currency,
@@ -235,14 +258,18 @@ router.get('/paypal/success', async (req, res) => {
           itemCurrency: item.currency,
         });
 
+        console.log(newPayment)
+
         newPayment.collection.findOne({ paymentId: payment.id }, function (err, payment) {
           // Only insert payment if it hasn't already been done
           if (!payment) {
             newPayment.save(function (err) {
               if (err) return res.render('error', { message: err });
               console.log(item.name);
+              sendEmail(newPayment, payerEmail)
               console.log('Payment saved to database');
               res.render('success', { product: item.name, price: itemPrice, port: process.env.PORT });
+              // TODO: Moritz Backend call mit paymentId
             });
           } else {
             res.render('error', { message: 'The article has already been purchased with this payment ID.' });
@@ -257,8 +284,148 @@ router.get('/paypal/success', async (req, res) => {
 
 router.get('/cancel', (req, res) => res.send('Cancelled'));
 
+// Send email with nodemailer
+async function sendEmail(details, receiver) {
+  console.log(receiver, 'RECEIVER EMAIL')
+  // create reusable transporter object using the default SMTP transport
+  let transporter = nodemailer.createTransport({
+    pool: true,
+    host: 'cmail01.mc-host24.de',
+    port: 25,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: drgnNoreplyEmail.user, // generated ethereal user
+      pass: drgnNoreplyEmail.password // generated ethereal password
+    }
+  });
+
+  const username = await getUserByToken(details.dragonflyToken)
+
+  // setup email data with unicode symbols
+  let mailOptions = {
+    from: `"Dragonfly Store" ${drgnNoreplyEmail.user}`, // sender address
+    to: `${receiver}, admin@inceptioncloud.net`, // list of receivers
+    subject: 'Order confirmation', // Subject line
+    text: `Hey ${username}, thank you for purchasing ${details.itemName} from our Shop.`,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap');
+
+    * {
+        font-family: Rubik;
+    }
+
+    * {
+        font-size: 1rem;
+    }
+
+    a[href] {
+        color: #15c;
+    }
+
+    b,
+    strong {
+        font-weight: 500;
+    }
+</style>
+
+<body>
+    <div>
+
+        <table cellpadding="0" cellspacing="0" style="border-radius:4px;border:1px #ccc solid;font-size:12.8px"
+            border="0" align="center">
+            <tbody>
+                <tr>
+                    <td colspan="3" height="20"></td>
+                </tr>
+                <tr style="line-height:0px;">
+                    <td width="100%" style="font-size:0px;" align="center" height="1">
+                        <img width="40px" style="max-height:73px;width:160px" alt=""
+                            src="https://playdragonfly.net/assets/Dragon.png" class="CToWUd hoverZoomLink">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <table cellpadding="0" cellspacing="0" style="line-height:25px" border="0" align="center">
+                            <tbody>
+                                <tr>
+                                    <td colspan="3" height="20"></td>
+                                </tr>
+                                <tr>
+                                    <td width="36"></td>
+                                    <td width="454" align="left" valign="top">
+                                        <p>Hey <b>${username}</b>,</p>
+                                        <p><span>Thank you for your purchase! This email confirms that we have received
+                                                your
+                                                payment and you should receive your items soon. If you do not receive
+                                                your
+                                                items within the next hour, please contact our support. Please do not
+                                                email
+                                                Mojang.</span></p>
+
+                                        <p>
+                                            <strong>Order summary: </strong>
+                                        </p>
+                                        <p>
+                                        </p>
+                                        <ul>
+                                            <li>1 <b>x</b> ${details.itemName}</li>
+                                        </ul>
+                                        <div><b>Total</b>: <b>${convertToEuros(details.receivedAmount).toFixed(2)} ${(details.receivedCurrency).toUpperCase()}</b></div>
+                                        <p>For further questions we are available on our <a href="https://icnet.dev/discord">Discord</a> server and by <a href="mailto:support@playdragonfly.net">email</a>.
+                                        </p>
+                                        <a href="https://store.playdragonfly.net/" target="_blank">Shop</a>
+                                    </td>
+                                    <td width="36"></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" height="36"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</body>
+
+</html>
+` // html body
+  };
+
+  // send mail with defined transport object
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return console.log(error);
+    }
+    console.log('NO-REPLY')
+    console.log(moment().format('MMMM Do YYYY, h:mm:ss a') + " | " + 'Message sent: ', info);
+    console.log(moment().format('MMMM Do YYYY, h:mm:ss a') + " | " + 'Preview URL: ', nodemailer.getTestMessageUrl(info));
+  });
+}
+
+async function getUserByToken(token) {
+  const response = await axios.post('https://api.playdragonfly.net/v1/authentication/token', {}, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+  return response.data.username
+  // https://api.playdragonfly.net/v1/authentication/cookie/token
+}
+
 function convertToEuros(cents) {
-  return cents / 100;
+  return (cents / 100);
 }
 
 module.exports = router;
