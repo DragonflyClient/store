@@ -304,7 +304,7 @@ async function sendEmail(details, receiver) {
   // setup email data with unicode symbols
   let mailOptions = {
     from: `"Dragonfly Store" ${drgnNoreplyEmail.user}`, // sender address
-    to: `${receiver}, admin@inceptioncloud.net`, // list of receivers
+    bcc: `${receiver}, admin@inceptioncloud.net`, // list of receivers
     subject: 'Order confirmation', // Subject line
     text: `Hey ${username}, thank you for purchasing ${details.itemName} from our Shop.`,
     html: `
