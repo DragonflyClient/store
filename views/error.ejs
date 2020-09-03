@@ -6,15 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Error</title>
     <link rel="shortcut icon" href="https://playdragonfly.net/assets/Dragon.svg" type="image/x-icon">
-    <link rel="stylesheet" href="<%= process.env.URL %>/stylesheets/success.css">
+    <link rel="stylesheet" href="<%= process.env.URL %>/stylesheets/status.css">
 </head>
 
 <body>
-    <div class="error-cont">
-        <i class="fas fa-times"></i>
+    <div class="status-cont">
+        <div class="times-icon">
+            <span class="icon-inner">
+                <i class="fas fa-times"></i>
+            </span>
+        </div>
         <h1>Whoops.</h1>
         <p><%= message %></p>
-        <p>Click <a href="<%= process.env.URL %>">here</a> to get back to the home page</p>
+        <div class="back-link">
+            <h3><a href="/">
+                    <span class="link-icon"><i class="fas fa-backward"></i></span> <span class="link-text">Back to
+                        shop</span>
+                </a></h3>
+        </div>
     </div>
 
     <!-- Fontawesome -->
