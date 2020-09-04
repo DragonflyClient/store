@@ -26,8 +26,7 @@ app.get('/', async (req, res) => {
 
     let items = [];
     await results.forEach((result) => items.push(result));
-    console.log(items);
-    res.render('index', { shopItems: items, test: 'hey!' });
+    res.render('index', { shopItems: items });
 });
 
 bodyParser.raw({ type: 'application/json' });
