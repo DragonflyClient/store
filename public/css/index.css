@@ -32,7 +32,7 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  box-shadow: 0 0 0 30px white inset !important;
   background-color: white !important;
   font-size: 1.3rem !important;
 }
@@ -117,35 +117,26 @@ h3 {
 }
 
 .card-wrapper {
-  width: 75%;
-  margin: 0 auto;
-  display: flex;
-  flex-wrap: wrap;
+    width: 65%;
+    margin: 50px auto 0 auto;
+    justify-content: center;
+    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat( auto-fill, minmax(400px, 1fr) );
 }
 
-/* The Modal (background) */
 .checkout-modal {
   display: none;
-  /* Hidden by default */
   position: fixed;
-  /* Stay in place */
-  z-index: 1;
-  /* Sit on top */
-  padding-top: 100px;
-  /* Location of the box */
+  z-index: 9999;
+  padding-top: 10vmin;
   left: 0;
   top: 0;
   width: 100%;
-  /* Full width */
   height: 100%;
-  /* Full height */
-  overflow: auto;
-  /* Enable scroll if needed */
   background-color: rgb(0, 0, 0);
-  /* Fallback color */
   background-color: rgba(0, 0, 0, 0.4);
   overflow: hidden;
-  /* Black w/ opacity */
   transition: 0.3s ease;
 }
 
@@ -170,7 +161,9 @@ h3 {
 
   animation: pop 0.3s ease-out;
   transform: scale(1);
-  overflow: hidden;
+  max-height: 550px;
+  height: 100%;
+  overflow: auto;
   transition: 0.3s ease;
 }
 
@@ -210,8 +203,9 @@ h3 {
 .payment-warning:not(:empty) {
   background: #ffc107;
   padding: 15px 10px;
-  font-size: 1.2rem;
+  font-size: 1rem;
   border-radius: 5px;
+  margin-bottom: 30px;
   color: white;
 }
 
@@ -222,6 +216,12 @@ h3 {
   font-size: 28px;
   font-weight: bold;
   transition: color 0.2s ease;
+}
+
+.close-video {
+  position: absolute;
+  top: -65px;
+  right: -65px;
 }
 
 .close:hover,
@@ -259,9 +259,10 @@ h3 {
   min-width: 370px;
   min-height: 450px;
   margin: 20px;
+  justify-self: center;
   padding-bottom: 25px;
   background: #fff;
-  box-shadow: 0px 10px 10px 0px rgba(0, 0, 0, 0.35);
+  box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.35);
 
   display: flex;
   flex-direction: column;
@@ -363,6 +364,10 @@ h3 {
   margin-top: 20px;
 }
 
+.email-notice {
+  margin-top: 10px;
+}
+
 .privacy-notice {
   margin-top: 25px;
   margin-bottom: 30px;
@@ -456,6 +461,8 @@ h3 {
   display: block;
   width: 80%;
   max-width: 700px;
+
+  position: relative;
 }
 
 #modal-video-preview {
@@ -508,9 +515,6 @@ h3 {
 
 /* The Close Button */
 .close {
-  position: absolute;
-  top: 15px;
-  right: 35px;
   font-size: 40px;
   font-weight: bold;
   transition: 0.3s;
@@ -528,6 +532,13 @@ h3 {
   .modal-content {
     width: 100%;
   }
+  .modal {
+    max-height: 650px;
+  }
+}
+
+#footer {
+  margin-top: 50px;
 }
 
 /* loading animation */
@@ -609,7 +620,7 @@ h3 {
 
 @media (max-width: 1000px) {
   .modal {
-    width: 80%;
+    width: 90%;
   }
 }
 
