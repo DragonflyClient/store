@@ -382,7 +382,7 @@ async function sendEmail(details, receiver) {
                                         <div><b>Total</b>: <b>${convertToEuros(details.receivedAmount).toFixed(2)} ${(details.receivedCurrency).toUpperCase()}</b></div>
                                         <p>For further questions we are available on our <a href="https://icnet.dev/discord">Discord</a> server and by <a href="mailto:support@playdragonfly.net">email</a>.
                                         </p>
-                                        <a href="https://store.playdragonfly.net/" target="_blank">Shop</a>
+                                        <a href="https://store.playdragonfly.net/" target="_blank">Shop</a> - <a href="https://ideas.playdragonfly.net/" target="_blank">Ideas</a> - <a href="https://playdragonfly.net/releasenotes" target="_blank">Updates</a>
                                     </td>
                                     <td width="36"></td>
                                 </tr>
