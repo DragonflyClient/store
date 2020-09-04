@@ -1,4 +1,5 @@
 const modalClose = document.querySelectorAll('.close');
+const loader = document.querySelector('.loading-cont')
 
 // Get the modal
 const modalVideo = document.getElementById("modal-video");
@@ -134,6 +135,7 @@ function redirectPost(url, data) {
 
 function createCheckout(item, payment, email) {
   console.log(payment);
+  loader.style.display = 'block'
   redirectPost(`https://store.playdragonfly.net/checkout/${payment}/${item}?email=${email}`);
 }
 
@@ -148,6 +150,7 @@ var checkoutButton = document.getElementById('checkout-button');
 function checkoutStripe(itemSku, email) {
   // Create a new Checkout Session using the server-side endpoint you
   // created in step 3.
+  loader.style.display = 'block'
   fetch(`https://store.playdragonfly.net//checkout/stripe/${itemSku}?email=${email}`, {
     method: 'POST',
   })
