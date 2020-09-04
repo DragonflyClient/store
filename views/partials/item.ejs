@@ -1,5 +1,6 @@
 <div class="shop-item" data-item="<%= item.id %>">
-  <div class="shop-item-image shop-item-image-<%= item.id %>" data-source="<%= item.images.back %>" id="show-video">
+  <div title="Click to see video" class="show-video shop-item-image shop-item-image-<%= item.id %>"
+    data-source="<%= item.media.video %>" data-caption="<%= item.description %>">
   </div>
   <div class="shop-item-details">
     <h2 class="shop-item-name"><%= item.name %></h2>
@@ -65,11 +66,11 @@
   </div>
   <style>
     .shop-item-image-<%=item.id %> {
-      background: url('<%= item.images.front %>');
+      background: url('<%= item.media.front %>');
     }
 
     .shop-item-image-<%=item.id %>:hover {
-      background: url('<%= item.images.back %>');
+      background: url('<%= item.media.back %>');
     }
   </style>
 </div>
