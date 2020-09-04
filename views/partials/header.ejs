@@ -1,0 +1,56 @@
+<div class="header" id="header">
+    <div class="upper-wrapper">
+        <div class="logo" id="logo">
+            <a href="/" onclick="scrollToTop()"><img class="logo-img" src="https://playdragonfly.net/assets/Dragon.png"
+                    alt="" /></a>
+        </div>
+        <div class="ham-wrapper">
+            <div class="line line1"></div>
+            <div class="line line2"></div>
+            <div class="line line3"></div>
+        </div>
+    </div>
+    <div style="font-size: 19px;" class="nav dfo" id="nav">
+        <ul>
+            <li class="item" onclick="closeMenu()">
+                <a href="https://playdragonfly.net">Home</a>
+            </li>
+            <li class="item" onclick="closeMenu()">
+                <a href="https://ideas.playdragonfly.net/">Ideas</a>
+            </li>
+            <li class="item" onclick="closeMenu()">
+                <a href="https://playdragonfly.net/patchnotes">Updates</a>
+            </li>
+            <li class="item" onclick="closeMenu()">
+                <a href="https://playdragonfly.net/download">Download</a>
+            </li>
+            <li class="item dropdown dropdown-account">
+                <a id="drgn-account-login" href="#">
+                    <div class="drgn-information" onclick="toggleDropdown(this)">
+                        <span style="pointer-events: none;" id="drgn-accountname" class="dropbtn"></span><span
+                            style="pointer-events: none;" id="drgn-accountname-icon"><i
+                                class="fas fa-angle-down"></i></span>
+                    </div>
+                    <div id="myDropdown" class="dropdown-content">
+                        <div class="dropdown-item" href="#" onclick="logOut()" data-toggle="modal"
+                            data-target="#logoutModal">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </div>
+                    </div>
+                </a>
+            </li>
+            <div class="socials">
+                <a href="https://instagram.com/inceptioncloud">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://twitter.com/inceptioncloud">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="https://discord.gg/VS2eN2z">
+                    <i class="fab fa-discord"></i>
+                </a>
+            </div>
+        </ul>
+    </div>
+</div>
