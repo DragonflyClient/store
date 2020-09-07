@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { findItemById } = require('../mongoose.js');
+const { connection, findItemById } = require('../mongoose.js');
+const mongoose = require('mongoose');
 const paypal = require('paypal-rest-sdk');
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const Payment = require('../models/Payment');
@@ -219,8 +220,9 @@ router.get('/paypal/success', async (req, res) => {
   const ref = req.cookies['ref']
 
   let referral;
-  if (ref) referral = ref
-  console.log(referral, ref)
+  if (await validRef(ref)) {
+    referral = ref
+  }
 
   console.log(payerEmail, 'PAYER-EMAIL!')
 
@@ -450,6 +452,19 @@ async function getUserByToken(token) {
 
 function convertToEuros(cents) {
   return (cents / 100);
+}
+
+async function validRef(ref) {
+  if (ref) {
+    const refLink = await mongoose.connection.db.collection('ref-links').findOne({ name: ref.toString().toLowerCase() })
+      .catch(err => console.log(err))
+
+    if (refLink !== null) {
+      return true
+    } else {
+      return false
+    }
+  }
 }
 
 module.exports = router;
