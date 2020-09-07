@@ -1,5 +1,6 @@
 const express = require('express');
 const checkoutRoute = require('./routes/checkout');
+const referralRoute = require('./routes/referral')
 const connection = require('./mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
@@ -26,11 +27,15 @@ app.get('/', async (req, res) => {
 
     let items = [];
     await results.forEach((result) => items.push(result));
-    res.render('index', { shopItems: items });
+    res.clearCookie('ref')
+        .render('index', { shopItems: items, ref: null })
+
 });
 
 bodyParser.raw({ type: 'application/json' });
 app.use('/checkout', checkoutRoute);
+
+app.use('/ref', referralRoute)
 
 app.listen(process.env.PORT, () => console.log(`Server Started on ${process.env.URL}`));
 
