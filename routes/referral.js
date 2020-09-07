@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 
 router.get('/:partner', async (req, res) => {
     const partner = req.params.partner
-    const results = await mongoose.connection.db.collection('referral-links').find({ partnerName: partner.toString().toLowerCase() });
+    const results = await mongoose.connection.db.collection('ref-links').find({ name: partner.toString().toLowerCase() });
     let refs = [];
     await results.forEach((result) => refs.push(result));
     console.log(partner, refs)
@@ -16,7 +16,7 @@ router.get('/:partner', async (req, res) => {
         let items = [];
         await itemsCollection.forEach((result) => items.push(result));
         res
-            .cookie('ref', refs[0].partnerName, { expires: new Date(Date.now() + 3600000), sameSite: "Lax" })
+            .cookie('ref', refs[0].name, { expires: new Date(Date.now() + 3600000), sameSite: "Lax" })
             .status(201)
             .render('index', { shopItems: items, ref: partner })
     } else {
