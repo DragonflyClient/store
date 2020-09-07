@@ -69,6 +69,12 @@ router.post('/stripe/:item_id', async (req, res) => {
 
 });
 
+async function executePayment(paymentId) {
+  return await axios.post('https://api.playdragonfly.net/v1/store/execute_payment', {
+    "paymentId": paymentId
+  }, {})
+}
+
 // Stripe success route
 router.get('/stripe/success', async (req, res) => {
   const sessionId = req.query.session_id;
@@ -117,12 +123,18 @@ router.get('/stripe/success', async (req, res) => {
     // Only insert payment if it hasn't already been done
     console.log(payment, 'payment')
     if (!payment) {
-      newPayment.save(function (err) {
+      newPayment.save(async function (err) {
         if (err) return res.render('error', { message: err });
-        sendEmail(newPayment, email)
-        console.log('Payment saved to database');
-        res.render('success', { product: item.name, price: convertToEuros(item.price), port: process.env.PORT });
-        // TODO: Send email with nodemailer
+
+        const execution = await executePayment(newPayment.paymentId)
+        if (execution.status === 200) {
+          await sendEmail(newPayment, email)
+          console.log('Payment executed successfully');
+          res.render('success', { product: item.name, price: convertToEuros(item.price), port: process.env.PORT });
+        } else {
+          console.log('Payment execution failed: ' + execution.status + " - " + execution.data);
+          res.render('error', { message: 'Payment execution failed! Please contact the Dragonfly support.' });
+        }
       });
     } else {
       res.render('error', { message: 'The article has already been purchased with this payment ID.' });
@@ -263,13 +275,18 @@ router.get('/paypal/success', async (req, res) => {
         newPayment.collection.findOne({ paymentId: payment.id }, function (err, payment) {
           // Only insert payment if it hasn't already been done
           if (!payment) {
-            newPayment.save(function (err) {
+            newPayment.save(async function (err) {
               if (err) return res.render('error', { message: err });
-              console.log(item.name);
-              sendEmail(newPayment, payerEmail)
-              console.log('Payment saved to database');
-              res.render('success', { product: item.name, price: itemPrice, port: process.env.PORT });
-              // TODO: Moritz Backend call mit paymentId
+
+              const execution = await executePayment(newPayment.paymentId)
+              if (execution.status === 200) {
+                await sendEmail(newPayment, payerEmail)
+                console.log('Payment executed successfully');
+                res.render('success', { product: item.name, price: itemPrice, port: process.env.PORT });
+              } else {
+                console.log('Payment execution failed: ' + execution.status + " - " + execution.data);
+                res.render('error', { message: 'Payment execution failed! Please contact the Dragonfly support.' });
+              }
             });
           } else {
             res.render('error', { message: 'The article has already been purchased with this payment ID.' });
