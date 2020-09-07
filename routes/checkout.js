@@ -82,6 +82,12 @@ router.get('/stripe/success', async (req, res) => {
   const sessionId = req.query.session_id;
   const session = await stripe.checkout.sessions.retrieve(sessionId);
   const intent = await stripe.paymentIntents.retrieve(session.payment_intent);
+  const ref = req.cookies['ref']
+
+  let referral;
+  if (await validRef(ref)) {
+    referral = ref
+  }
 
   // check intent status
   if (intent.status !== 'succeeded') return res.render('error', { message: 'Payment did not succeed!' });
@@ -119,6 +125,7 @@ router.get('/stripe/success', async (req, res) => {
     itemName: item.name,
     itemPrice: item.price,
     itemCurrency: item.currency,
+    ref: referral
   });
 
   newPayment.collection.findOne({ paymentId: intent.id }, function (err, payment) {
@@ -131,6 +138,7 @@ router.get('/stripe/success', async (req, res) => {
         const execution = await executePayment(newPayment.paymentId)
         if (execution.status === 200) {
           await sendEmail(newPayment, email)
+          if (newPayment.ref) await setRefBonus(newPayment)
           console.log('Payment executed successfully');
           res.render('success', { product: item.name, price: convertToEuros(item.price), port: process.env.PORT });
         } else {
@@ -291,8 +299,8 @@ router.get('/paypal/success', async (req, res) => {
               const execution = await executePayment(newPayment.paymentId)
               if (execution.status === 200) {
                 await sendEmail(newPayment, payerEmail)
+                if (newPayment.ref) await setRefBonus(newPayment)
                 console.log('Payment executed successfully');
-                if (newPayment.ref) setRefBonus(newPayment)
                 res.render('success', { product: item.name, price: itemPrice, port: process.env.PORT });
               } else {
                 console.log('Payment execution failed: ' + execution.status + " - " + execution.data);
