@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const paypal = require('paypal-rest-sdk');
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const Payment = require('../models/Payment');
+const Referral = require('../models/Referral')
 const nodemailer = require('nodemailer')
 const axios = require('axios')
 
@@ -291,6 +292,7 @@ router.get('/paypal/success', async (req, res) => {
               if (execution.status === 200) {
                 await sendEmail(newPayment, payerEmail)
                 console.log('Payment executed successfully');
+                if (newPayment.ref) setRefBonus(newPayment)
                 res.render('success', { product: item.name, price: itemPrice, port: process.env.PORT });
               } else {
                 console.log('Payment execution failed: ' + execution.status + " - " + execution.data);
@@ -465,6 +467,20 @@ async function validRef(ref) {
       return false
     }
   }
+}
+
+async function setRefBonus(payment) {
+  console.log(payment)
+  const newRef = new Referral({
+    refName: payment.ref,
+    amount: (convertToEuros(payment.itemPrice).toFixed(2) / 100) * 5,
+    article: payment.itemName,
+    creationDate: new Date(payment.creationDate).getTime(),
+  });
+  newRef.save(async function (err) {
+    if (err) console.log(err)
+    console.log(`Saved ref bonus for ${payment.ref}`)
+  });
 }
 
 module.exports = router;
