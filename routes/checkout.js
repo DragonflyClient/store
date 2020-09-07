@@ -216,6 +216,12 @@ router.get('/paypal/success', async (req, res) => {
   const payerEmail = req.query.payerEmail
   const paymentId = req.query.paymentId;
   const token = req.cookies['dragonfly-token'];
+  const ref = req.cookies['ref']
+
+  let referral;
+  if (ref) referral = ref
+  console.log(referral, ref)
+
   console.log(payerEmail, 'PAYER-EMAIL!')
 
   let itemId = req.query.item_id;
@@ -268,6 +274,7 @@ router.get('/paypal/success', async (req, res) => {
           itemName: item.name,
           itemPrice: item.price,
           itemCurrency: item.currency,
+          ref: referral
         });
 
         console.log(newPayment)
