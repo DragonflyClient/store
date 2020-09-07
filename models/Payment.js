@@ -47,6 +47,9 @@ const PaymentSchema = mongoose.Schema({
     itemCurrency: {
         type: String,
         required: true
+    },
+    ref: {
+        type: String
     }
 })
 
