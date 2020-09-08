@@ -137,7 +137,7 @@ router.get('/stripe/success', async (req, res) => {
 
         const execution = await executePayment(newPayment.paymentId)
         if (execution.status === 200) {
-          await sendEmail(newPayment, email)
+          if (email && email !== '') await sendEmail(newPayment, email)
           if (newPayment.ref) await setRefBonus(newPayment)
           console.log('Payment executed successfully');
           res.render('success', { product: item.name, price: convertToEuros(item.price), port: process.env.PORT });
@@ -256,6 +256,7 @@ router.get('/paypal/success', async (req, res) => {
   paypal.payment.execute(paymentId, execute_payment_json, async function (error, payment) {
     if (error) {
       console.log(error.response);
+      res.render('error', { message: `${error.response.message}. Please try again later.` })
       throw error;
     } else {
       // Check if paid price is the same as the price from the db
@@ -298,7 +299,7 @@ router.get('/paypal/success', async (req, res) => {
 
               const execution = await executePayment(newPayment.paymentId)
               if (execution.status === 200) {
-                await sendEmail(newPayment, payerEmail)
+                if (payerEmail && payerEmail !== '') await sendEmail(newPayment, payerEmail)
                 if (newPayment.ref) await setRefBonus(newPayment)
                 console.log('Payment executed successfully');
                 res.render('success', { product: item.name, price: itemPrice, port: process.env.PORT });
@@ -485,10 +486,16 @@ async function setRefBonus(payment) {
     article: payment.itemName,
     creationDate: new Date(payment.creationDate).getTime(),
   });
-  newRef.save(async function (err) {
-    if (err) console.log(err)
-    console.log(`Saved ref bonus for ${payment.ref}`)
-  });
-}
 
+  newRef.collection.findOne({ refName: payment.ref }, async function (err, ref) {
+    if (!ref) {
+      newRef.save(function (err) {
+        if (err) console.log(err)
+        console.log(`Saved ref bonus for ${payment.ref}`)
+      });
+    } else {
+      await newRef.collection.updateOne({ refName: payment.ref }, { $set: { amount: ref.amount + (convertToEuros(payment.itemPrice).toFixed(2) / 100) * 5 } })
+    }
+  })
+}
 module.exports = router;
