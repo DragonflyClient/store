@@ -36,13 +36,12 @@
     <div class="page-wrapper">
         <%- include('partials/header') %>
 
-        <% if(ref) { %>
-        <h3><%= ref %></h3>
-        <% } %>
+        <h3><%= refName %></h3>
 
         <div class="card-wrapper">
+            <% let type; if(refType) { type = refType } %>
             <% shopItems.forEach(item => { %>
-            <%- include('partials/item', {item: item}); %>
+            <%- include('partials/item', {item: item, refType: type || null}); %>
             <% }); %>
         </div>
         <div id="footer"></div>

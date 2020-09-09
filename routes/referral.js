@@ -7,6 +7,7 @@ router.get('/:partner', async (req, res) => {
     const partner = req.params.partner
     const refLink = await mongoose.connection.db.collection('ref-links').findOne({ name: partner.toString().toLowerCase() });
     // let refs = [];
+    console.log(refLink)
 
     if (refLink !== null) {
 
@@ -17,7 +18,7 @@ router.get('/:partner', async (req, res) => {
         res
             .cookie('ref', refLink.name, { expires: new Date(Date.now() + 3600000), sameSite: "Lax" })
             .status(201)
-            .render('index', { shopItems: items, ref: partner })
+            .render('index', { shopItems: items, refName: partner, refType: refLink.type })
     } else {
         res.status(404)
             .clearCookie('ref', { domain: "store.playdragonfly.net" })

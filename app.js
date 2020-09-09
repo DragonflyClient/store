@@ -28,7 +28,7 @@ app.get('/', async (req, res) => {
     let items = [];
     await results.forEach((result) => items.push(result));
     res.clearCookie('ref')
-        .render('index', { shopItems: items, ref: null })
+        .render('index', { shopItems: items, refName: null, refType: null })
 
 });
 
