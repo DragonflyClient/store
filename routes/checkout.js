@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { connection, findItemById } = require('../mongoose.js');
+const { connection, findItemById, findItemByRefName } = require('../mongoose.js');
 const mongoose = require('mongoose');
 const paypal = require('paypal-rest-sdk');
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const Payment = require('../models/Payment');
 const Referral = require('../models/Referral')
 const nodemailer = require('nodemailer')
+const moment = require('moment')
 const axios = require('axios')
 
 const drgnNoreplyEmail = {
@@ -40,7 +41,16 @@ router.post('/stripe/:item_id', async (req, res) => {
     console.log('no dragonfly-token');
     return
   }
+
+  const refName = req.cookies['ref']
   const item = await findItemById(itemId);
+  let itemPrice = item.price
+  if (refName) {
+    const ref = await findItemByRefName(refName)
+    console.log(ref, 'REF FROM DB')
+    if (ref.type === "discount") itemPrice = item.price - (item.price / 100 * ref.amount);
+    console.log(itemPrice, "ITEM PRICE!!")
+  }
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
@@ -51,7 +61,7 @@ router.post('/stripe/:item_id', async (req, res) => {
             name: item.name,
             description: item.description,
           },
-          unit_amount: item.price,
+          unit_amount: itemPrice,
         },
         quantity: 1,
       },
@@ -71,9 +81,10 @@ router.post('/stripe/:item_id', async (req, res) => {
 
 });
 
-async function executePayment(paymentId) {
+async function executePayment(paymentId, ref) {
   return await axios.post('https://api.playdragonfly.net/v1/store/execute_payment', {
-    "paymentId": paymentId
+    "paymentId": paymentId,
+    "refName": ref
   }, {})
 }
 
@@ -85,8 +96,10 @@ router.get('/stripe/success', async (req, res) => {
   const ref = req.cookies['ref']
 
   let referral;
+  let refAmount;
   if (await validRef(ref)) {
     referral = ref
+    refAmount = await findItemByRefName(ref)
   }
 
   // check intent status
@@ -101,7 +114,8 @@ router.get('/stripe/success', async (req, res) => {
   if (item == null) return res.render('error', { message: 'Item not found!' });
 
   // check amount received
-  if (intent.amount_received !== item.price) return res.render('error', { message: 'Incorrect price received!' });
+  console.log(item.price - (((item.price) * refAmount.amount) / 100), "PRICE", item.price)
+  if (intent.amount_received !== item.price && intent.amount_received !== item.price - (((item.price) * refAmount.amount) / 100)) return res.render('error', { message: 'Incorrect price received!' });
 
   const token = req.cookies['dragonfly-token'];
 
@@ -130,13 +144,14 @@ router.get('/stripe/success', async (req, res) => {
 
   newPayment.collection.findOne({ paymentId: intent.id }, function (err, payment) {
     // Only insert payment if it hasn't already been done
-    console.log(payment, 'payment')
     if (!payment) {
       newPayment.save(async function (err) {
         if (err) return res.render('error', { message: err });
 
-        const execution = await executePayment(newPayment.paymentId)
+        console.log(referral, "RefLink")
+        const execution = await executePayment(newPayment.paymentId, referral)
         if (execution.status === 200) {
+          console.log("SUCCESS")
           if (email && email !== '') await sendEmail(newPayment, email)
           if (newPayment.ref) await setRefBonus(newPayment)
           console.log('Payment executed successfully');
@@ -160,6 +175,7 @@ router.post('/paypal/:item_id', async (req, res) => {
   const itemId = req.params.item_id.toString();
   const item = await findItemById(itemId);
   const token = req.cookies['dragonfly-token'];
+  const refName = req.cookies['ref']
 
   if (!token) {
     console.log('no dragonfly-token');
@@ -170,7 +186,13 @@ router.post('/paypal/:item_id', async (req, res) => {
       console.log('Item not found');
       res.send('Item not found');
     } else {
-      const itemPrice = convertToEuros(item.price);
+      let itemPrice = convertToEuros(item.price)
+      if (refName) {
+        const ref = await findItemByRefName(refName)
+        console.log(ref, 'REF FROM DB')
+        if (ref.type === "discount") itemPrice = convertToEuros(item.price) - (convertToEuros(item.price) / 100 * ref.amount);
+      }
+      console.log(itemPrice, "ITEM PRICE!!")
       console.log(`Creating payment with item ${item.name} and price ${itemPrice}`);
       const create_payment_json = {
         intent: 'sale',
@@ -297,7 +319,7 @@ router.get('/paypal/success', async (req, res) => {
             newPayment.save(async function (err) {
               if (err) return res.render('error', { message: err });
 
-              const execution = await executePayment(newPayment.paymentId)
+              const execution = await executePayment(newPayment.paymentId, referral)
               if (execution.status === 200) {
                 if (payerEmail && payerEmail !== '') await sendEmail(newPayment, payerEmail)
                 if (newPayment.ref) await setRefBonus(newPayment)
@@ -445,9 +467,8 @@ async function sendEmail(details, receiver) {
     if (error) {
       return console.log(error);
     }
-    console.log('NO-REPLY')
-    console.log(moment().format('MMMM Do YYYY, h:mm:ss a') + " | " + 'Message sent: ', info);
-    console.log(moment().format('MMMM Do YYYY, h:mm:ss a') + " | " + 'Preview URL: ', nodemailer.getTestMessageUrl(info));
+    console.log('EMAIL SENT')
+    console.log(moment().format('MMMM Do YYYY, h:mm:ss a') + " | " + `Message sent! Accepted Emails: ${info.accepted}, Rejected Emails: ${info.rejected}, Message time: ${info.messageTime}`);
   });
 }
 
@@ -480,21 +501,23 @@ async function validRef(ref) {
 
 async function setRefBonus(payment) {
   console.log(payment)
+  const refAmount = await findItemByRefName(payment.ref)
+  console.log(refAmount)
   const newRef = new Referral({
     refName: payment.ref,
-    amount: (convertToEuros(payment.itemPrice).toFixed(2) / 100) * 5,
+    amount: (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.ref,
     article: payment.itemName,
     creationDate: new Date(payment.creationDate).getTime(),
   });
 
-  newRef.collection.findOne({ refName: payment.ref }, async function (err, ref) {
-    if (!ref) {
+  newRef.collection.findOne({ refName: payment.ref }, async function (err, referral) {
+    if (!referral) {
       newRef.save(function (err) {
         if (err) console.log(err)
         console.log(`Saved ref bonus for ${payment.ref}`)
       });
     } else {
-      await newRef.collection.updateOne({ refName: payment.ref }, { $set: { amount: ref.amount + (convertToEuros(payment.itemPrice).toFixed(2) / 100) * 5 } })
+      await newRef.collection.updateOne({ refName: payment.ref }, { $set: { amount: referral.amount + (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount } })
     }
   })
 }
