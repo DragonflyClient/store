@@ -10,5 +10,10 @@ function findItemById(itemId) {
     return mongoose.connection.db.collection("shop-items").findOne({ id: itemId })
 }
 
+function findItemByRefName(name) {
+    return mongoose.connection.db.collection("ref-links").findOne({ name: name })
+}
+
 exports.connection = connection
 exports.findItemById = findItemById
+exports.findItemByRefName = findItemByRefName
