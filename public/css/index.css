@@ -158,11 +158,9 @@ h3 {
   margin: auto;
   padding: 20px;
   width: 45%;
-
-  animation: pop 0.3s ease-out;
+  animation: pop 0.4s cubic-bezier(0, 0.04, 0.04, 1.4);
   transform: scale(1);
   overflow: auto;
-  transition: 0.3s ease;
 }
 
 .modal-content {
