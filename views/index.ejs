@@ -36,7 +36,18 @@
     <div class="page-wrapper">
         <%- include('partials/header') %>
 
-        <h3><%= refName %></h3>
+        <% if(refName) { %>
+        <div class="ref-information-wrapper">
+            <p>You are now shopping with
+                <span class="ref-information-name"><%= refName %></span>'s referral link in
+                the Dragonfly Store</p>
+            <% if(refType === "bonus") { %>
+            <p>Meanwhile, <%= refName %> receives <%= refAmount %>% of the purchase price.</p>
+            <% } else if(refType === "discount") { %>
+            <p>Meanwhile, all articles are reduced by <%= refAmount %>%.</p>
+            <% } %>
+        </div>
+        <% } %>
 
         <div class="card-wrapper">
             <% let type; if(refType) { type = refType } %>
