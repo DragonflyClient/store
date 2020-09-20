@@ -18,7 +18,7 @@ router.get('/:partner', async (req, res) => {
         res
             .cookie('ref', refLink.name, { expires: new Date(Date.now() + 3600000), sameSite: "Lax" })
             .status(201)
-            .render('index', { shopItems: items, refName: partner, refType: refLink.type })
+            .render('index', { shopItems: items, refName: partner, refType: refLink.type, refAmount: refLink.amount })
     } else {
         res.status(404)
             .clearCookie('ref', { domain: "store.playdragonfly.net" })
