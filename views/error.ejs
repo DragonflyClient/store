@@ -18,10 +18,17 @@
         </div>
         <h1>Whoops.</h1>
         <p><%= message %></p>
+        <p class="error_contact-support" style="font-size: 1.2rem; margin-top: 10px;">For more information and possible
+            help, please contact our support via our <a class="error_support-link"
+                href="https://icnet.dev/discord">Discord server</a>, <a class="error_support-link"
+                href="https://twitter.com/DragonflyClient">Twitter</a> account or send us an <a
+                class="error_support-link" href="mailto:support@playdragonfly.net">email</a><br>
+            Payment ID: <%= paymentId %>
+        </p>
         <div class="back-link">
-            <h3><a href="/">
+            <h3><a href="<%= backUrl %>">
                     <span class="link-icon"><i class="fas fa-backward"></i></span> <span class="link-text">Back to
-                        shop</span>
+                        store</span>
                 </a></h3>
         </div>
     </div>
