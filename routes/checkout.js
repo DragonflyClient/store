@@ -47,9 +47,8 @@ router.post('/stripe/:item_id', async (req, res) => {
   let itemPrice = item.price
   if (refName) {
     const ref = await findItemByRefName(refName)
-    console.log(ref, 'REF FROM DB')
     if (ref.type === "discount") itemPrice = item.price - (item.price / 100 * ref.amount);
-    console.log(itemPrice, "ITEM PRICE!!")
+    console.log(itemPrice, " | Item price + ", ref + " | Referral information")
   }
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -103,25 +102,46 @@ router.get('/stripe/success', async (req, res) => {
   }
 
   // check intent status
-  if (intent.status !== 'succeeded') return res.render('error', { message: 'Payment did not succeed!' });
+  if (intent.status !== 'succeeded') return res.render('error', {
+    message: 'Payment did not succeed!', paymentId: intent.id,
+    backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+  });
 
   const itemId = intent.metadata.item_id;
   const email = intent.metadata.email
   const item = await findItemById(itemId);
-  console.log(req.cookies, 'success route')
+
+  console.log(intent.amount_received, item.price, refAmount)
 
   // check if item was found
-  if (item == null) return res.render('error', { message: 'Item not found!' });
+  if (item == null) return res.render('error', {
+    message: 'Item not found!', paymentId: intent.id,
+    backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+  });
 
-  // check amount received
-  console.log(item.price - (((item.price) * refAmount.amount) / 100), "PRICE", item.price)
-  if (intent.amount_received !== item.price && intent.amount_received !== item.price - (((item.price) * refAmount.amount) / 100)) return res.render('error', { message: 'Incorrect price received!' });
+  if (refAmount) {
+    if (refAmount.type == "discount") {
+      if (intent.amount_received !== item.price - (((item.price) * refAmount.amount) / 100)) return res.render('error', {
+        message: 'Incorrect price received!', paymentId: intent.id,
+        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+      });
+    } else {
+      if (intent.amount_received !== item.price) return res.render('error', {
+        message: 'Incorrect price received!', paymentId: intent.id,
+        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+      });
+    }
+  }
+
 
   const token = req.cookies['dragonfly-token'];
 
   // check dragonfly token
   if (intent.metadata.dragonfly_token !== token)
-    return res.render('error', { message: 'Invalid Dragonfly authentication token' });
+    return res.render('error', {
+      message: 'Invalid Dragonfly authentication token', paymentId: intent.id,
+      backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+    })
 
   console.log('Everything alright', 'Item price:', item.price, '| Received amount:', intent.amount_received);
 
@@ -146,23 +166,30 @@ router.get('/stripe/success', async (req, res) => {
     // Only insert payment if it hasn't already been done
     if (!payment) {
       newPayment.save(async function (err) {
-        if (err) return res.render('error', { message: err });
+        if (err) return res.render('error', { message: err, paymentId: intent.id, backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay` });
 
         console.log(referral, "RefLink")
         const execution = await executePayment(newPayment.paymentId, referral)
         if (execution.status === 200) {
+
           console.log("SUCCESS")
           if (email && email !== '') await sendEmail(newPayment, email)
-          if (newPayment.ref) await setRefBonus(newPayment)
+          console.log(newPayment, newPayment.ref, "PAYMENT")
+          if (newPayment.ref && refAmount.type === "bonus") await setRefBonus(newPayment)
+
           console.log('Payment executed successfully');
-          res.render('success', { product: item.name, price: convertToEuros(item.price), port: process.env.PORT });
+          res.render('success', { product: item.name, price: convertToEuros(item.price), port: process.env.PORT, backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay` });
         } else {
           console.log('Payment execution failed: ' + execution.status + " - " + execution.data);
-          res.render('error', { message: 'Payment execution failed! Please contact the Dragonfly support.' });
+          res.render('error', { message: 'Payment execution failed! Please contact the Dragonfly support.', paymentId: intent.id, backUrl: referral ? `https://playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay` })
         }
       });
     } else {
-      res.render('error', { message: 'The article has already been purchased with this payment ID.' });
+      console.log(referral)
+      res.render('error', {
+        message: 'The article has already been purchased with this payment ID.', paymentId: intent.id,
+        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+      })
     }
   });
 });
@@ -179,7 +206,10 @@ router.post('/paypal/:item_id', async (req, res) => {
 
   if (!token) {
     console.log('no dragonfly-token');
-    res.render('error', { message: 'You have to be logged in to purchase an item from the Dragonfly store.' });
+    res.render('error', {
+      message: 'You have to be logged in to purchase an item from the Dragonfly store.', paymentId: intent.id,
+      backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+    });
   } else {
     // Get item details from database
     if (item == null) {
@@ -191,7 +221,9 @@ router.post('/paypal/:item_id', async (req, res) => {
         const ref = await findItemByRefName(refName)
         console.log(ref, 'REF FROM DB')
         if (ref.type === "discount") itemPrice = convertToEuros(item.price) - (convertToEuros(item.price) / 100 * ref.amount);
+        console.log(itemPrice, "ITEM PRICE")
       }
+
       console.log(itemPrice, "ITEM PRICE!!")
       console.log(`Creating payment with item ${item.name} and price ${itemPrice}`);
       const create_payment_json = {
@@ -251,15 +283,27 @@ router.get('/paypal/success', async (req, res) => {
   const ref = req.cookies['ref']
 
   let referral;
-  if (await validRef(ref)) {
+  let refAmount;
+  console.log(ref)
+  if (ref && await validRef(ref)) {
     referral = ref
+    refAmount = await findItemByRefName(ref)
   }
-
   console.log(payerEmail, 'PAYER-EMAIL!')
 
   let itemId = req.query.item_id;
   let item = await findItemById(itemId);
-  let itemPrice = convertToEuros(item.price);
+  let itemPrice;
+
+  console.log(item.price, item)
+
+  if (refAmount && refAmount.type == "discount") {
+    itemPrice = (item.price - (((item.price) * refAmount.amount) / 100)) / 100
+    console.log(itemPrice, "ITEM PRICE SUCCESS")
+  } else {
+    itemPrice = item.price / 100
+  }
+
 
   // Set item details
   const execute_payment_json = {
@@ -274,11 +318,16 @@ router.get('/paypal/success', async (req, res) => {
     ],
   };
 
+  console.log(execute_payment_json, execute_payment_json.transactions[0].amount.total, "PAYMENT DETAILS")
+
   // Execute paypal payment
   paypal.payment.execute(paymentId, execute_payment_json, async function (error, payment) {
     if (error) {
       console.log(error.response);
-      res.render('error', { message: `${error.response.message}. Please try again later.` })
+      res.render('error', {
+        message: `${error.response.message}. Please try again later.`, paymentId: paymentId,
+        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+      })
       throw error;
     } else {
       // Check if paid price is the same as the price from the db
@@ -311,27 +360,38 @@ router.get('/paypal/success', async (req, res) => {
           ref: referral
         });
 
-        console.log(newPayment)
-
         newPayment.collection.findOne({ paymentId: payment.id }, function (err, payment) {
           // Only insert payment if it hasn't already been done
+          if (err) return console.log(err, "ERR")
           if (!payment) {
             newPayment.save(async function (err) {
-              if (err) return res.render('error', { message: err });
+              if (err) return res.render('error', {
+                message: err, paymentId: paymentId,
+                backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+              });
 
               const execution = await executePayment(newPayment.paymentId, referral)
               if (execution.status === 200) {
                 if (payerEmail && payerEmail !== '') await sendEmail(newPayment, payerEmail)
-                if (newPayment.ref) await setRefBonus(newPayment)
+                if (newPayment.ref && refAmount.type === "bonus") await setRefBonus(newPayment)
                 console.log('Payment executed successfully');
-                res.render('success', { product: item.name, price: itemPrice, port: process.env.PORT });
+                res.render('success', {
+                  product: item.name, price: itemPrice, port: process.env.PORT,
+                  backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+                });
               } else {
                 console.log('Payment execution failed: ' + execution.status + " - " + execution.data);
-                res.render('error', { message: 'Payment execution failed! Please contact the Dragonfly support.' });
+                res.render('error', {
+                  message: `Payment execution failed! Please contact the Dragonfly support.`, paymentId: paymentId,
+                  backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+                })
               }
             });
           } else {
-            res.render('error', { message: 'The article has already been purchased with this payment ID.' });
+            res.render('error', {
+              message: `The article has already been purchased with this payment ID.`, paymentId: paymentId,
+              backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+            })
           }
         });
       } else {
@@ -500,12 +560,13 @@ async function validRef(ref) {
 }
 
 async function setRefBonus(payment) {
-  console.log(payment)
   const refAmount = await findItemByRefName(payment.ref)
-  console.log(refAmount)
+  console.log(refAmount, "REF AMOUNT")
+  console.log(payment, payment.itemPrice)
+  console.log((convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount)
   const newRef = new Referral({
     refName: payment.ref,
-    amount: (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.ref,
+    amount: (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount,
     article: payment.itemName,
     creationDate: new Date(payment.creationDate).getTime(),
   });
@@ -513,7 +574,8 @@ async function setRefBonus(payment) {
   newRef.collection.findOne({ refName: payment.ref }, async function (err, referral) {
     if (!referral) {
       newRef.save(function (err) {
-        if (err) console.log(err)
+        // if (err) console.log(err)
+        if (err) console.log("ERR")
         console.log(`Saved ref bonus for ${payment.ref}`)
       });
     } else {
