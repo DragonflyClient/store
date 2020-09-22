@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { connection, findItemById } = require('../mongoose.js');
 const mongoose = require('mongoose');
+const Referral = require('../models/Referral')
 
 router.get('/:partner', async (req, res) => {
     const partner = req.params.partner
@@ -26,11 +27,21 @@ router.get('/:partner', async (req, res) => {
     }
 })
 
-router.post('/type/:name/:type', (req, res) => {
+router.post('/type/:name/:type', async (req, res) => {
     const { name, type } = req.params
-    console.log(type !== "discount" && type !== "bonus")
-    if (type !== "discount" && type !== "bonus") return res.status(400).send({ message: "Invalid ref type" })
-    res.send({ name: name, type: type })
+    const validRefTypes = ["discount", "bonus"]
+    console.log(validRefTypes.includes(type))
+    if (!validRefTypes.includes(type)) return res.status(400).send({ message: "Invalid ref type" })
+
+    const collectionRefLinks = mongoose.connection.db.collection('ref-links')
+    const refLink = await collectionRefLinks.findOne({ name: name })
+    if (refLink.type === type) return res.status(200).send({ message: `Ref type already set to ${type}` })
+
+    const updatedRefLink = await collectionRefLinks.findOneAndUpdate({ name: name }, { $set: { type: type } })
+
+    if (!refLink) return res.status(400).send({ message: `Referral with name ${name} could not found` })
+    console.log(updatedRefLink)
+    res.send({ name: name, type: type, ref: updatedRefLink })
 })
 
 module.exports = router
