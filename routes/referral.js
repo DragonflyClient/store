@@ -26,4 +26,11 @@ router.get('/:partner', async (req, res) => {
     }
 })
 
+router.post('/type/:name/:type', (req, res) => {
+    const { name, type } = req.params
+    console.log(type !== "discount" && type !== "bonus")
+    if (type !== "discount" && type !== "bonus") return res.status(400).send({ message: "Invalid ref type" })
+    res.send({ name: name, type: type })
+})
+
 module.exports = router
