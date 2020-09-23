@@ -8,7 +8,7 @@ const Payment = require('../models/Payment');
 const Referral = require('../models/Referral')
 const nodemailer = require('nodemailer')
 const moment = require('moment')
-const axios = require('axios')
+const axios = require('axios').default
 
 const drgnNoreplyEmail = {
   user: process.env.DRGN_NOREPLY_EMAIL_USERNAME,
