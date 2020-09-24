@@ -50,6 +50,9 @@ const PaymentSchema = mongoose.Schema({
     },
     ref: {
         type: String
+    },
+    refUUID: {
+        type: String
     }
 })
 
