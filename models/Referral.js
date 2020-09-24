@@ -5,12 +5,13 @@ const ReferralSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    refUUID: {
+        type: String,
+        required: true
+    },
     amount: {
         type: Number,
         required: true
-    },
-    article: {
-        type: String
     },
     creationDate: {
         type: Number,
