@@ -1,7 +1,7 @@
 {
-  "name": "node_paypal_sample",
+  "name": "dragonfly_store",
   "version": "1.0.0",
-  "description": "Sample paypal app",
+  "description": "The insane dragonfly store",
   "main": "app.js",
   "scripts": {
     "start": "node app",
