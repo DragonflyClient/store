@@ -96,7 +96,8 @@ router.get('/stripe/success', async (req, res) => {
 
   let referral;
   let refAmount;
-  if (await validRef(ref)) {
+  const uuid = await validRef(ref)
+  if (ref && uuid) {
     referral = ref
     refAmount = await findItemByRefName(ref)
   }
@@ -159,7 +160,8 @@ router.get('/stripe/success', async (req, res) => {
     itemName: item.name,
     itemPrice: item.price,
     itemCurrency: item.currency,
-    ref: referral
+    ref: referral,
+    refUUID: uuid
   });
 
   newPayment.collection.findOne({ paymentId: intent.id }, function (err, payment) {
@@ -172,7 +174,6 @@ router.get('/stripe/success', async (req, res) => {
         const execution = await executePayment(newPayment.paymentId, referral)
         if (execution.status === 200) {
 
-          console.log("SUCCESS")
           if (email && email !== '') await sendEmail(newPayment, email)
           console.log(newPayment, newPayment.ref, "PAYMENT")
           if (newPayment.ref && refAmount.type === "bonus") await setRefBonus(newPayment)
@@ -285,7 +286,8 @@ router.get('/paypal/success', async (req, res) => {
   let referral;
   let refAmount;
   console.log(ref)
-  if (ref && await validRef(ref)) {
+  const uuid = await validRef(ref)
+  if (ref && uuid) {
     referral = ref
     refAmount = await findItemByRefName(ref)
   }
@@ -357,7 +359,8 @@ router.get('/paypal/success', async (req, res) => {
           itemName: item.name,
           itemPrice: item.price,
           itemCurrency: item.currency,
-          ref: referral
+          ref: referral,
+          refUUID: uuid
         });
 
         newPayment.collection.findOne({ paymentId: payment.id }, function (err, payment) {
@@ -552,26 +555,25 @@ async function validRef(ref) {
       .catch(err => console.log(err))
 
     if (refLink !== null) {
-      return true
+      return refLink.uuid
     } else {
-      return false
+      return null
     }
   }
 }
 
 async function setRefBonus(payment) {
   const refAmount = await findItemByRefName(payment.ref)
-  console.log(refAmount, "REF AMOUNT")
   console.log(payment, payment.itemPrice)
   console.log((convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount)
   const newRef = new Referral({
     refName: payment.ref,
+    refUUID: payment.refUUID,
     amount: (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount,
-    article: payment.itemName,
     creationDate: new Date(payment.creationDate).getTime(),
   });
 
-  newRef.collection.findOne({ refName: payment.ref }, async function (err, referral) {
+  newRef.collection.findOne({ refUUID: payment.refUUID }, async function (err, referral) {
     if (!referral) {
       newRef.save(function (err) {
         // if (err) console.log(err)
@@ -579,7 +581,7 @@ async function setRefBonus(payment) {
         console.log(`Saved ref bonus for ${payment.ref}`)
       });
     } else {
-      await newRef.collection.updateOne({ refName: payment.ref }, { $set: { amount: referral.amount + (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount } })
+      await newRef.collection.updateOne({ refUUID: payment.refUUID }, { $set: { amount: referral.amount + (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount } })
     }
   })
 }
