@@ -23,7 +23,7 @@
                 href="https://icnet.dev/discord">Discord server</a>, <a class="error_support-link"
                 href="https://twitter.com/DragonflyClient">Twitter</a> account or send us an <a
                 class="error_support-link" href="mailto:support@playdragonfly.net">email</a><br>
-            Payment ID: <%= paymentId %>
+            <% if(paymentId) { %>Payment ID:<%= paymentId %><% } %>
         </p>
         <div class="back-link">
             <h3><a href="<%= backUrl %>">
