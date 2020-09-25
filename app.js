@@ -1,6 +1,9 @@
 const express = require('express');
+
 const checkoutRoute = require('./routes/checkout');
 const referralRoute = require('./routes/referral')
+const apiRoute = require('./routes/api/index')
+
 const connection = require('./mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
@@ -18,7 +21,7 @@ const app = express();
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
-app.use(cors());
+app.use(cors({ origin: "https://playdragonfly.net", credentials: true }));
 app.use(cookieParser());
 
 // Body parser middleware
@@ -29,6 +32,8 @@ bodyParser.raw({ type: 'application/json' });
 app.use('/checkout', checkoutRoute);
 
 app.use('/ref', referralRoute)
+
+app.use('/api', apiRoute)
 
 
 // Security while development
