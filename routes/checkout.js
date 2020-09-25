@@ -105,7 +105,7 @@ router.get('/stripe/success', async (req, res) => {
   // check intent status
   if (intent.status !== 'succeeded') return res.render('error', {
     message: 'Payment did not succeed!', paymentId: intent.id,
-    backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+    backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/`
   });
 
   const itemId = intent.metadata.item_id;
@@ -117,19 +117,19 @@ router.get('/stripe/success', async (req, res) => {
   // check if item was found
   if (item == null) return res.render('error', {
     message: 'Item not found!', paymentId: intent.id,
-    backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+    backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/`
   });
 
   if (refAmount) {
     if (refAmount.type == "discount") {
       if (intent.amount_received !== item.price - (((item.price) * refAmount.amount) / 100)) return res.render('error', {
         message: 'Incorrect price received!', paymentId: intent.id,
-        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/`
       });
     } else {
       if (intent.amount_received !== item.price) return res.render('error', {
         message: 'Incorrect price received!', paymentId: intent.id,
-        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/`
       });
     }
   }
@@ -141,7 +141,7 @@ router.get('/stripe/success', async (req, res) => {
   if (intent.metadata.dragonfly_token !== token)
     return res.render('error', {
       message: 'Invalid Dragonfly authentication token', paymentId: intent.id,
-      backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+      backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/`
     })
 
   console.log('Everything alright', 'Item price:', item.price, '| Received amount:', intent.amount_received);
@@ -168,7 +168,7 @@ router.get('/stripe/success', async (req, res) => {
     // Only insert payment if it hasn't already been done
     if (!payment) {
       newPayment.save(async function (err) {
-        if (err) return res.render('error', { message: err, paymentId: intent.id, backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay` });
+        if (err) return res.render('error', { message: err, paymentId: intent.id, backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/` });
 
         console.log(referral, "RefLink")
         const execution = await executePayment(newPayment.paymentId, referral)
@@ -179,17 +179,17 @@ router.get('/stripe/success', async (req, res) => {
           if (newPayment.ref && refAmount.type === "bonus") await setRefBonus(newPayment)
 
           console.log('Payment executed successfully');
-          res.render('success', { product: item.name, price: convertToEuros(item.price), port: process.env.PORT, backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay` });
+          res.render('success', { product: item.name, price: convertToEuros(item.price), port: process.env.PORT, backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/` });
         } else {
           console.log('Payment execution failed: ' + execution.status + " - " + execution.data);
-          res.render('error', { message: 'Payment execution failed! Please contact the Dragonfly support.', paymentId: intent.id, backUrl: referral ? `https://playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay` })
+          res.render('error', { message: 'Payment execution failed! Please contact the Dragonfly support.', paymentId: intent.id, backUrl: referral ? `https://playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/` })
         }
       });
     } else {
       console.log(referral)
       res.render('error', {
         message: 'The article has already been purchased with this payment ID.', paymentId: intent.id,
-        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/`
       })
     }
   });
@@ -209,7 +209,7 @@ router.post('/paypal/:item_id', async (req, res) => {
     console.log('no dragonfly-token');
     res.render('error', {
       message: 'You have to be logged in to purchase an item from the Dragonfly store.', paymentId: intent.id,
-      backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/?ref=pay`
+      backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/`
     });
   } else {
     // Get item details from database
