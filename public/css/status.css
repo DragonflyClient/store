@@ -56,6 +56,12 @@ body {
   margin-bottom: 20px;
 }
 
+.information-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  color: rgb(50, 85, 148);
+}
+
 .icon-inner {
   transition: transform 0.4s ease;
   animation: boom 1s ease;
