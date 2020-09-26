@@ -404,7 +404,7 @@ router.get('/paypal/success', async (req, res) => {
   });
 });
 
-router.get('/cancel', (req, res) => res.send('Cancelled'));
+router.get('/cancel', (req, res) => res.render("cancel"));
 
 // Send email with nodemailer
 async function sendEmail(details, receiver) {
