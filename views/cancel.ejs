@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment completed</title>
+    <link rel="shortcut icon" href="https://playdragonfly.net/assets/Dragon.svg" type="image/x-icon">
+    <link rel="stylesheet" href="<%= process.env.URL %>/css/status.css">
+</head>
+
+<body>
+    <div class="status-cont">
+        <div class="information-icon">
+            <span class="icon-inner">
+                <i class="fas fa-info-circle"></i>
+            </span>
+        </div>
+        <h1>Your payment has been cancelled successfully!</h1>
+        <p>Since you canceled the purchase, no further costs will be charged.</p>
+        <div class="back-link">
+            <h3><a href="https://store.playdragonfly.net/?ref=error_checkout"> <span class="link-icon"><i
+                            class="fas fa-backward"></i></span> <span class="link-text">Back to
+                        store</span>
+                </a></h3>
+        </div>
+    </div>
+
+    <!-- Fontawesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js"></script>
+</body>
+
+</html>
