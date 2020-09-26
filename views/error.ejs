@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Error</title>
+    <title>Error | Dragonfly</title>
     <link rel="shortcut icon" href="https://playdragonfly.net/assets/Dragon.svg" type="image/x-icon">
     <link rel="stylesheet" href="<%= process.env.URL %>/css/status.css">
 </head>
@@ -26,7 +26,7 @@
             <% if(paymentId) { %>Payment ID:<%= paymentId %><% } %>
         </p>
         <div class="back-link">
-            <h3><a href="<%= backUrl %>">
+            <h3><a href=<%= backUrl || "https://store.playdragonfly.net/?ref=error_checkout" %>>
                     <span class="link-icon"><i class="fas fa-backward"></i></span> <span class="link-text">Back to
                         store</span>
                 </a></h3>
