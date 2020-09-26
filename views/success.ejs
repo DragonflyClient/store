@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment completed</title>
+    <title>Success | Dragonfly</title>
     <link rel="shortcut icon" href="https://playdragonfly.net/assets/Dragon.svg" type="image/x-icon">
     <link rel="stylesheet" href="<%= process.env.URL %>/css/status.css">
 </head>
@@ -19,8 +19,8 @@
         <h1>Your payment has been completed successfully!</h1>
         <p>If you have not received your item in the next 24 hours, please contact our support.</p>
         <div class="back-link">
-            <h3><a href=<%= backUrl || "https://store.playdragonfly.net/?ref=pay" %>> <span class="link-icon"><i
-                            class="fas fa-backward"></i></span> <span class="link-text">Back to
+            <h3><a href=<%= backUrl || "https://store.playdragonfly.net/?ref=success_checkout" %>> <span
+                        class="link-icon"><i class="fas fa-backward"></i></span> <span class="link-text">Back to
                         store</span>
                 </a></h3>
         </div>
