@@ -21,7 +21,7 @@ const app = express();
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
-app.use(cors({ origin: "https://playdragonfly.net", credentials: true }));
+app.use(cors({ origin: ["https://playdragonfly.net", "https://dashboard.playdragonfly.net"], credentials: true }));
 app.use(cookieParser());
 
 // Body parser middleware
