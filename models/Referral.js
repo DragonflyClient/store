@@ -13,6 +13,11 @@ const ReferralSchema = mongoose.Schema({
         type: Number,
         required: true
     },
+    count: {
+        type: Number,
+        required: true,
+        default: 1
+    },
     creationDate: {
         type: Number,
         required: true
