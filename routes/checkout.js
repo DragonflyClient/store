@@ -570,18 +570,19 @@ async function setRefBonus(payment) {
     refName: payment.ref,
     refUUID: payment.refUUID,
     amount: (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount,
+    count: 1,
     creationDate: new Date(payment.creationDate).getTime(),
   });
 
   newRef.collection.findOne({ refUUID: payment.refUUID }, async function (err, referral) {
+    if (err) return console.error(err)
     if (!referral) {
       newRef.save(function (err) {
-        // if (err) console.log(err)
-        if (err) console.log("ERR")
+        if (err) console.log(err)
         console.log(`Saved ref bonus for ${payment.ref}`)
       });
     } else {
-      await newRef.collection.updateOne({ refUUID: payment.refUUID }, { $set: { amount: referral.amount + (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount } })
+      await newRef.collection.updateOne({ refUUID: payment.refUUID }, { $set: { amount: referral.amount + (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount, count: referral.count + 1 } })
     }
   })
 }
