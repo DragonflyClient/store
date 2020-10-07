@@ -426,7 +426,8 @@ async function sendEmail(details, receiver) {
   // setup email data with unicode symbols
   let mailOptions = {
     from: `"Dragonfly Store" ${drgnNoreplyEmail.user}`, // sender address
-    bcc: `${receiver}, admin@inceptioncloud.net`, // list of receivers
+    // bcc: `${receiver}, admin@inceptioncloud.net`, list of receivers
+    to: receiver,
     subject: 'Order confirmation', // Subject line
     text: `Hey ${username}, thank you for purchasing ${details.itemName} from our Shop.`,
     html: `
@@ -504,7 +505,7 @@ async function sendEmail(details, receiver) {
                                         <div><b>Total</b>: <b>${convertToEuros(details.receivedAmount).toFixed(2)} ${(details.receivedCurrency).toUpperCase()}</b></div>
                                         <p>For further questions we are available on our <a href="https://icnet.dev/discord">Discord</a> server and by <a href="mailto:support@playdragonfly.net">email</a>.
                                         </p>
-                                        <a href="https://store.playdragonfly.net/" target="_blank">Shop</a> - <a href="https://ideas.playdragonfly.net/" target="_blank">Ideas</a> - <a href="https://playdragonfly.net/releasenotes" target="_blank">Updates</a>
+                                        <a href="https://store.playdragonfly.net/?utm_source=store&utm_medium=email&utm_campaign=purchase_confirmation" target="_blank">Store</a> - <a href="https://ideas.playdragonfly.net/?utm_source=store&utm_medium=email&utm_campaign=purchase_confirmation" target="_blank">Ideas</a> - <a href="https://playdragonfly.net/releasenotes?utm_source=store&utm_medium=email&utm_campaign=purchase_confirmation" target="_blank">Updates</a>
                                     </td>
                                     <td width="36"></td>
                                 </tr>
