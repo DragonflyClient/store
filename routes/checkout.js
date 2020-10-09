@@ -30,13 +30,23 @@ router.get('/', (req, res) => {
   res.send('Ready to receive payments');
 });
 
+const secureAuth = async function (req, res, next) {
+  const dragonflyToken = req.cookies["dragonfly-token"]
+  if (!dragonflyToken) return res.json({ error: true, message: 'You have to be logged in to purchase an item from the Dragonfly store.' });
+  next()
+}
+
+router.use(secureAuth)
+
 // Stripe payment route
 router.post('/stripe/:item_id', async (req, res) => {
   const email = req.query.email
   console.log(email, 'payment route')
   const itemId = req.params.item_id.toString();
   const token = req.cookies['dragonfly-token'];
-  if (!token) {
+  const username = await getUserByToken(token)
+
+  if (!token || !username) {
     res.json({ error: true, message: 'You have to be logged in to purchase an item from the Dragonfly store.' });
     console.log('no dragonfly-token');
     return
@@ -203,9 +213,10 @@ router.post('/paypal/:item_id', async (req, res) => {
   const itemId = req.params.item_id.toString();
   const item = await findItemById(itemId);
   const token = req.cookies['dragonfly-token'];
+  const username = await getUserByToken(token)
   const refName = req.cookies['ref']
 
-  if (!token) {
+  if (!token || !username) {
     console.log('no dragonfly-token');
     res.render('error', {
       message: 'You have to be logged in to purchase an item from the Dragonfly store.', paymentId: intent.id,
@@ -537,13 +548,21 @@ async function sendEmail(details, receiver) {
 }
 
 async function getUserByToken(token) {
-  const response = await axios.post('https://api.playdragonfly.net/v1/authentication/token', {}, {
+  let account;
+  await axios.post('https://api.playdragonfly.net/v1/authentication/token', {}, {
     headers: {
-      'Authorization': `Bearer ${token}`
+      "Authorization": `Bearer ${token}`
     }
   })
-  return response.data.username
-  // https://api.playdragonfly.net/v1/authentication/cookie/token
+    .then(result => {
+      console.log(result.data)
+      account = result.data
+    })
+    .catch(err => {
+      if (err) console.log("err")
+    })
+
+  return account.username
 }
 
 function convertToEuros(cents) {
