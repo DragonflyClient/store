@@ -3,6 +3,7 @@ const express = require('express');
 const checkoutRoute = require('./routes/checkout');
 const referralRoute = require('./routes/referral')
 const apiRoute = require('./routes/api/index')
+const cartRoute = require('./routes/cart')
 
 const connection = require('./mongoose');
 const bodyParser = require('body-parser');
@@ -35,6 +36,7 @@ app.use('/ref', referralRoute)
 
 app.use('/api', apiRoute)
 
+app.use('/cart', cartRoute)
 
 // Security while development
 app.get('/*', async (req, res) => {
