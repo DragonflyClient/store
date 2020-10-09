@@ -5,8 +5,8 @@ const CartItemSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    item: {
-        type: String,
+    items: {
+        type: [String],
         required: true
     },
     bonus: {
