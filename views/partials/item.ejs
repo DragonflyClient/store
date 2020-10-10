@@ -8,7 +8,7 @@
       <% if(refType) { %>
       <% if(refType === "discount") { %>
       <h4 class="shop-item-price">
-        <%=  (item.originalPrice.toFixed(2) / 100 - (((item.originalPrice.toFixed(2) / 100) * refAmount) / 100)).toFixed(2) %>
+        <%=  ((item.originalPrice / 100).toFixed(2) - (((item.originalPrice.toFixed(2) / 100) * refAmount) / 100)).toFixed(2) %>
         <span class="shop-item-currency"><%= item.currency %></span></h4>
       <h4 class="shop-item-price-old">
         <%= (item.originalPrice / 100).toFixed(2) %> <span class="shop-item-currency"><%= item.currency %> </span>
@@ -16,9 +16,6 @@
       <% } else { %>
       <h4 class="shop-item-price"><%= (item.originalPrice / 100).toFixed(2) %> <span
           class="shop-item-currency"><%= item.currency %></span></h4>
-      <h4 class="shop-item-price-old" style='display: <%= item.price == item.originalPrice ? "none" : "block" %>'>
-        <%= (item.price / 100).toFixed(2) %> <span class="shop-item-currency"><%= item.currency %></span>
-      </h4>
       <% } %>
       <% } else { %>
       <h4 class="shop-item-price"><%= (item.price / 100).toFixed(2) %> <span
