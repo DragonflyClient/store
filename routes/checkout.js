@@ -57,7 +57,8 @@ router.post('/stripe/:item_id', async (req, res) => {
   let itemPrice = item.price
   if (refName) {
     const ref = await findItemByRefName(refName)
-    if (ref.type === "discount") itemPrice = item.price - (item.price / 100 * ref.amount);
+    if (ref.type === "discount") itemPrice = item.originalPrice - (item.originalPrice / 100 * ref.amount);
+    else if (ref.type === "bonus") itemPrice = item.originalPrice
     console.log(itemPrice, " | Item price + ", ref + " | Referral information")
   }
   const session = await stripe.checkout.sessions.create({
@@ -133,6 +134,11 @@ router.get('/stripe/success', async (req, res) => {
   if (refAmount) {
     if (refAmount.type == "discount") {
       if (intent.amount_received !== item.price - (((item.price) * refAmount.amount) / 100)) return res.render('error', {
+        message: 'Incorrect price received!', paymentId: intent.id,
+        backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/`
+      });
+    } else if (refAmount.type == "bonus") {
+      if (intent.amount_received !== item.originalPrice) return res.render('error', {
         message: 'Incorrect price received!', paymentId: intent.id,
         backUrl: referral ? `https://store.playdragonfly.net/ref/${referral}` : `https://store.playdragonfly.net/`
       });
@@ -232,7 +238,8 @@ router.post('/paypal/:item_id', async (req, res) => {
       if (refName) {
         const ref = await findItemByRefName(refName)
         console.log(ref, 'REF FROM DB')
-        if (ref.type === "discount") itemPrice = convertToEuros(item.price) - (convertToEuros(item.price) / 100 * ref.amount);
+        if (ref.type === "discount") itemPrice = item.originalPrice - (item.originalPrice / 100 * ref.amount);
+        else if (ref.type === "bonus") itemPrice = item.originalPrice / 100
         console.log(itemPrice, "ITEM PRICE")
       }
 
@@ -310,13 +317,17 @@ router.get('/paypal/success', async (req, res) => {
 
   console.log(item.price, item)
 
-  if (refAmount && refAmount.type == "discount") {
-    itemPrice = (item.price - (((item.price) * refAmount.amount) / 100)) / 100
-    console.log(itemPrice, "ITEM PRICE SUCCESS")
-  } else {
-    itemPrice = item.price / 100
-  }
+  // if (refAmount && refAmount.type == "discount") {
+  //   itemPrice = (item.price - (((item.price) * refAmount.amount) / 100)) / 100
+  //   console.log(itemPrice, "ITEM PRICE SUCCESS")
+  // } else {
+  //   itemPrice = item.price / 100
+  // }
 
+  if (refAmount) {
+    if (refAmount.type === "discount") itemPrice = item.originalPrice - (item.originalPrice / 100 * ref.amount);
+    else if (refAmount.type === "bonus") itemPrice = item.originalPrice / 100
+  }
 
   // Set item details
   const execute_payment_json = {
@@ -585,11 +596,14 @@ async function validRef(ref) {
 async function setRefBonus(payment) {
   const refAmount = await findItemByRefName(payment.ref)
   console.log(payment, payment.itemPrice)
-  console.log((convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount)
+  // convertToEuros(1200).toFixed(2) / 100) * 15
+
+  // (payment.itemPrice / 100) / 100 * refAmount.amount
+  console.log((payment.itemPrice / 100) / 100 * refAmount.amount)
   const newRef = new Referral({
     refName: payment.ref,
     refUUID: payment.refUUID,
-    amount: (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount,
+    amount: (payment.itemPrice / 100) / 100 * refAmount.amount,
     count: 1,
     creationDate: new Date(payment.creationDate).getTime(),
   });
@@ -602,7 +616,7 @@ async function setRefBonus(payment) {
         console.log(`Saved ref bonus for ${payment.ref}`)
       });
     } else {
-      await newRef.collection.updateOne({ refUUID: payment.refUUID }, { $set: { amount: referral.amount + (convertToEuros(payment.itemPrice).toFixed(2) / 100) * refAmount.amount, count: referral.count + 1 } })
+      await newRef.collection.updateOne({ refUUID: payment.refUUID }, { $set: { amount: referral.amount + (payment.itemPrice / 100) / 100 * refAmount.amount, count: referral.count + 1 } })
     }
   })
 }
